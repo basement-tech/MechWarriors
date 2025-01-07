@@ -14,6 +14,8 @@
 #include <FS.h>        // File System for Web Server Files
 #include <LittleFS.h>  // This file system is used.
 
+#include "neo_data.h"  // for neopixels
+
 // mark parameters not used in example
 #define UNUSED __attribute__((unused))
 
@@ -31,6 +33,23 @@ ESP8266WebServer server(80);
 
 // The text of builtin files are in this header file
 #include "builtinfiles.h"
+
+/*
+ * neopixel support
+ */
+uint8_t neo_enable = 0;  // enable neopixel updates: 0 = not enabled
+
+void handleNeoEnable(void)  {
+  neo_enable = 1;
+  server.sendHeader("Cache-Control", "no-cache");
+  server.send(200, "text/javascript; charset=utf-8", "NeoPixels enabled\n");
+}
+
+void handleNeoDisable(void)  {
+  neo_enable = 0;
+  server.sendHeader("Cache-Control", "no-cache");
+  server.send(200, "text/javascript; charset=utf-8", "NeoPixels disabled\n");
+}
 
 
 // ===== Simple functions used to answer simple GET requests =====
@@ -229,6 +248,8 @@ void setup(void) {
   server.on("/$list", HTTP_GET, handleListFiles);
   server.on("/$sysinfo", HTTP_GET, handleSysInfo);
   server.on("/$netinfo", HTTP_GET, handleNetInfo);
+  server.on("/$neoenable", HTTP_GET, handleNeoEnable);
+  server.on("/$neodisable", HTTP_GET, handleNeoDisable);
 
   // UPLOAD and DELETE of files in the file system using a request handler.
   server.addHandler(new FileServerHandler());
@@ -256,6 +277,10 @@ void setup(void) {
 // run the server...
 void loop(void) {
   server.handleClient();
+
+  if(neo_enable != 0)
+    neo_cycle_next();
+
 }  // loop()
 
 // end.
