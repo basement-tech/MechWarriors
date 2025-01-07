@@ -1,3 +1,16 @@
+The idea here is to use a webserver on the esp8266 to configure the pattern being
+played out by a string of neopixels to create an effect for the mech warriors
+table-top world.
+
+The below webserver example seems to be a good start - was able to get it running
+out of the box and make a simple addition (netinfo) to see that I could.
+NOTE: I had to use the address as the name/dns didn't seem to work in my
+environment.
+
+Plan is to add neopixel driver and a webpage to change between built-in
+patterns and the file system that is created by the server to allow 
+download of new patterns. (patterns will contain RGB and timing data)
+
 # WebServer example documentation and hints
 
 This example shows different techniques on how to use and extend the ESP8266WebServer for specific purposes
