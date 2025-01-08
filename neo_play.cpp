@@ -22,6 +22,8 @@ Adafruit_NeoPixel pixels(NEO_NUMPIXELS, NEO_PIN, NEO_TYPE);
 
 void neo_init(void)  {
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+  pixels.clear(); // Set all pixel colors to 'off'
+  pixels.show();   // Send the updated pixel colors to the hardware.
 }
 
 /*
@@ -29,18 +31,58 @@ void neo_init(void)  {
  * and update the strand if so.
  */
 
+uint64_t current_millis = 0;
+int32_t current_index = 0;   // index into the pattern array
+
+/*
+ * helper for writing a single pixel
+ */
+void neo_write_pixel(void)  {
+  pixels.clear(); // Set all pixel colors to 'off'
+  /*
+    * send the next point in the sequence to the strand
+    */
+  for(int i=0; i < NEO_NUMPIXELS; i++) { // For each pixel...
+    pixels.setPixelColor(i, pixels.Color(red_med[current_index].red, red_med[current_index].green, red_med[current_index].blue));
+
+  pixels.show();   // Send the updated pixel colors to the hardware.
+  }
+}
+
+#define NEO_SEQ_START 0
+#define NEO_SEQ_WAIT 1
+#define NEO_SEQ_WRITE 2
+
+uint8_t neo_state = NEO_SEQ_START;
 
 void neo_cycle_next(void)  {
-  pixels.clear(); // Set all pixel colors to 'off'
+  uint64_t new_millis = 0;
 
-  // The first NeoPixel in a strand is #0, second is 1, all the way up
-  // to the count of pixels minus one.
-  for(int i=0; i < NEO_NUMPIXELS; i++) { // For each pixel...
+  switch(neo_state)  {
+    case NEO_SEQ_START:
+      neo_write_pixel();
+      neo_state = NEO_SEQ_WAIT;
+      break;
+    
+    case NEO_SEQ_WAIT:
+      /*
+       * if the timer has expired (or assumed that if current_millis == 0, then it will be)
+       */
+      if(((new_millis = millis()) - current_millis) >= red_med[current_index].ms_after_last)  {
+        current_millis = new_millis;
+        current_index++;
+      }
+      neo_state = NEO_SEQ_WRITE;
+      break;
+    
+    case NEO_SEQ_WRITE:
+      if(red_med[current_index].ms_after_last < 0)  // list terminator: nothing to write
+          current_index = 0;
+      neo_write_pixel();
+      neo_state = NEO_SEQ_WAIT;
+      break;
 
-    // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
-    // Here we're using a moderately bright green color:
-    pixels.setPixelColor(i, pixels.Color(0, 150, 0));
-
-    pixels.show();   // Send the updated pixel colors to the hardware.
+    default:
+      break;
   }
 }

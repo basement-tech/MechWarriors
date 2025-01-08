@@ -6,5 +6,7 @@
 #include "neo_data.h"
 
 neo_data_t red_med[] = {
-  { "red_med", 127, 0, 0, 0, -1 }
+  { "red_med", 0, 0, 0, 0, 1000 },
+  { "red_med", 127, 0, 0, 0, 1000 },
+  { "red_med", 0, 0, 0, 0, -1 }
 };

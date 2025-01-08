@@ -271,6 +271,12 @@ void setup(void) {
 
   server.begin();
   TRACE("hostname=%s\n", WiFi.getHostname());
+
+  // initialize neopixel strip
+  TRACE("Initialize neopixel strip...\n");
+  neo_init();
+
+
 }  // setup
 
 
