@@ -123,6 +123,10 @@ void handleNetInfo() {
   server.send(200, "text/javascript; charset=utf-8", result);
 }  // handleNetInfo()
 
+void handleButton()  {
+    TRACE("Button pressed\n");
+}
+
 // ===== Request Handler class used to answer more complex requests =====
 
 // The FileServerHandler is registered to the web server to support DELETE and UPLOAD of files into the filesystem.
@@ -250,6 +254,7 @@ void setup(void) {
   server.on("/$netinfo", HTTP_GET, handleNetInfo);
   server.on("/$neoenable", HTTP_GET, handleNeoEnable);
   server.on("/$neodisable", HTTP_GET, handleNeoDisable);
+  server.on("/api/button", HTTP_POST, handleButton);
 
   // UPLOAD and DELETE of files in the file system using a request handler.
   server.addHandler(new FileServerHandler());

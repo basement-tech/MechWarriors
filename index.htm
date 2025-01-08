@@ -13,7 +13,15 @@
 	Mech Warriors Environment Enhancement
 	</div>
 	<br>
-		<input type='button' value='RED-MED' id='red-med' onclick='/$neoenable'>
+		<input type='button' value='RED-MED' id='red-med' onclick="callCFunction()">
 		<input type='button' value='GREEN-MED' id='green-med' onclick='/$neodisable'>
+	<script>
+	function callCFunction()  {
+		fetch('/api/button', {method: 'POST'})
+		.then(response => response.json())
+		.then(data => console.log(data))
+		.catch(error => console.error('Error:', error));
+	}
+	</script>
 </html>
 
