@@ -16,8 +16,15 @@
 		<input type='button' value='RED-MED' id='red-med' seq='0' onclick="callCFunction(this)">
 		<input type='button' value='GREEN-MED' id='green-med' onclick='/$neodisable'>
 	<script>
-	function callCFunction()  {
-		fetch('/api/button', {method: 'POST'})
+	function callCFunction(o)  {
+		let seq_data = {
+			seqence: o.seq
+		}
+		let jsonData = JSON.stringify(seq_data);
+		fetch('/api/button', {
+			method: 'POST',
+			body: jsonData
+		})
 		.then(response => response.json())
 		.then(data => console.log(data))
 		.catch(error => console.error('Error:', error));
