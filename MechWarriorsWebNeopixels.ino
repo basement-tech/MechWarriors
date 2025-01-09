@@ -125,6 +125,7 @@ void handleNetInfo() {
 
 void handleButton()  {
     TRACE("Button pressed\n");
+    server.send(201);
 }
 
 // ===== Request Handler class used to answer more complex requests =====
