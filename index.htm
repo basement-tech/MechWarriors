@@ -13,14 +13,15 @@
 	Mech Warriors Environment Enhancement
 	</div>
 	<br>
-		<input type='button' value='RED-MED' id='red-med' seq='0' onclick="callCFunction(this)">
+		<input type='button' value='RED-MED' id='red-med' onclick="callCFunction(this)">
 		<input type='button' value='GREEN-MED' id='green-med' onclick='/$neodisable'>
 	<script>
 	function callCFunction(o)  {
 		let seq_data = {
-			seqence: o.seq
+			seqence: String(o.value)
 		}
 		let jsonData = JSON.stringify(seq_data);
+		console.log(jsonData)  // this works ... how to get to c callback in server.on?
 		fetch('/api/button', {
 			method: 'POST',
 			body: jsonData
