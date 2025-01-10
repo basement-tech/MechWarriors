@@ -6,16 +6,23 @@
 
 #include <c_types.h>
 
+#define MAX_SEQUENCES 10  // number of sequences to allocate
+#define MAX_NUM_SEQ_POINTS 128   // maximum number of points per sequence
+
 /*
  * struct for individual points in the pattern
  */
-typedef struct  {
-  const char *label;
+typedef struct {
   uint8_t red;
   uint8_t green;
   uint8_t blue;
   uint8_t white;  // not always used
   int32_t ms_after_last;  // wait this many uS after last change to play
+} neo_seq_point_t;
+
+typedef struct  {
+  const char *label;
+  const neo_seq_point_t point[MAX_NUM_SEQ_POINTS];
 } neo_data_t;
 
 #define NEO_NUMPIXELS 10
@@ -25,7 +32,8 @@ typedef struct  {
 void neo_cycle_next(void);
 void neo_init(void);
 
-extern neo_data_t red_med[];
+extern neo_data_t neo_sequences[MAX_SEQUENCES];  // sequence specifications
+extern int8_t seq_index;  // which sequence is being played out
 
 #define __NEO_DATA_H__
 #endif

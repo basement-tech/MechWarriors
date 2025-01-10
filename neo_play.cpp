@@ -27,6 +27,11 @@ void neo_init(void)  {
 }
 
 /*
+ * which sequence are we playing out
+ */
+int8_t seq_index = 0;
+
+/*
  * check if the specified time since last change has occured
  * and update the strand if so.
  */
@@ -43,7 +48,9 @@ void neo_write_pixel(void)  {
     * send the next point in the sequence to the strand
     */
   for(int i=0; i < NEO_NUMPIXELS; i++) { // For each pixel...
-    pixels.setPixelColor(i, pixels.Color(red_med[current_index].red, red_med[current_index].green, red_med[current_index].blue));
+    pixels.setPixelColor(i, pixels.Color( neo_sequences[seq_index].point[current_index].red, 
+                                          neo_sequences[seq_index].point[current_index].green,
+                                          neo_sequences[seq_index].point[current_index].blue));
 
   pixels.show();   // Send the updated pixel colors to the hardware.
   }
@@ -68,7 +75,7 @@ void neo_cycle_next(void)  {
       /*
        * if the timer has expired (or assumed that if current_millis == 0, then it will be)
        */
-      if(((new_millis = millis()) - current_millis) >= red_med[current_index].ms_after_last)  {
+      if(((new_millis = millis()) - current_millis) >= neo_sequences[seq_index].point[current_index].ms_after_last)  {
         current_millis = new_millis;
         current_index++;
       }
@@ -76,7 +83,7 @@ void neo_cycle_next(void)  {
       break;
     
     case NEO_SEQ_WRITE:
-      if(red_med[current_index].ms_after_last < 0)  // list terminator: nothing to write
+      if(neo_sequences[seq_index].point[current_index].ms_after_last < 0)  // list terminator: nothing to write
           current_index = 0;
       neo_write_pixel();
       neo_state = NEO_SEQ_WAIT;

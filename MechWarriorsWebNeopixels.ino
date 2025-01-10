@@ -37,7 +37,7 @@ ESP8266WebServer server(80);
 /*
  * neopixel support
  */
-uint8_t neo_enable = 0;  // enable neopixel updates: 0 = not enabled
+uint8_t neo_enable = 1;  // enable neopixel updates: 0 = not enabled
 
 void handleNeoEnable(void)  {
   neo_enable = 1;
