@@ -15,6 +15,45 @@
  *   https://arduinojson.org/v7/tutorial/deserialization/
  * - Adafruit NeoPixel by Adafruit v1.12.3
  *
+ * Some notes regarding how this works 
+ * (see the README.md for some things regarding the webserver example):
+ * 
+ * The webserver application provides the web server itself, and some built in 
+ * functionality:
+ * - webserver
+ * - LittleFS for storing files on a flash-disk (persists through firmware flashing)
+ * - built in functions for uploading files (maybe for deleting)
+ *   (note: files are overwritten by files of the same name: useful for development)
+ * If not specific URL is sent to the sebserver the implementation looks for a file
+ * named index.htm.  That's the mechanism that I used for the button page (i.e. uploaded
+ * html/js for the page in a file called index.htm)
+ *
+ * Regarding data flow from the button (html) -> js -> c callback:
+ * html puts up buttons with an onclick: directive; that calls the 
+ * javascript to make a POST to the server.  The button has an value= that
+ * identifies which specific button was pressed, while calling the same js callback
+ * for all buttons.  i.e. the identification of the button is sent via the 'this' argument
+ * to the callback in the button html line.
+ * 
+ * javascript can see the value of the button as o.button, where o is the passed in argument.
+ * it converts it to a json object, attaching the tag "sequence".  This json string becomes the 
+ * body of the fetch/POST request to the server.
+ *
+ * the server makes the body of the POST available to ...
+ *
+ * index.html .........................................MechWarriorsWebNeopixels.ino
+ * html/button .............callCfunction() ...........handleButton() 
+ * html button "value" -> js o.value -> POST body -> server.arg("plain")
+ *
+ * TODO:
+ * o understand how the upload/delete is handled since it's a POST.
+ *   determine if it has any conflicts with the button implementation.
+ * o single shot sequences using -2 at termination
+ * o more built in sequences
+ * o scaling for cell phone versus computer (e.g. button size/layout)
+ * o file based user uploaded sequences (probably json formatted files)
+ * 
+ *
  * Daniel J. Zimmerman  Jan 2025
  *
  */
