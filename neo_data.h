@@ -6,7 +6,7 @@
 
 #include <c_types.h>
 
-#define MAX_SEQUENCES 10  // number of sequences to allocate
+#define MAX_SEQUENCES 2  // number of sequences to allocate
 #define MAX_NUM_SEQ_POINTS 128   // maximum number of points per sequence
 
 /*
@@ -31,6 +31,7 @@ typedef struct  {
 
 void neo_cycle_next(void);
 void neo_init(void);
+int8_t neo_set_sequence(const char *label);
 
 extern neo_data_t neo_sequences[MAX_SEQUENCES];  // sequence specifications
 extern int8_t seq_index;  // which sequence is being played out

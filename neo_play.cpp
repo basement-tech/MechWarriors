@@ -1,7 +1,7 @@
 /*
  * functions to play out the neo_pixel patterns
  */
-
+#include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 
 #include "neo_data.h"
@@ -27,9 +27,21 @@ void neo_init(void)  {
 }
 
 /*
- * which sequence are we playing out
+ * which/set sequence are we playing out
+ * returns: -1 if the label doesn't match a sequence
  */
 int8_t seq_index = 0;
+int8_t neo_set_sequence(const char *label)  {
+  int8_t ret = -1;
+  for(int i = 0; i < MAX_SEQUENCES; i++)  {
+    if(strcmp(label, neo_sequences[i].label) == 0)  {
+      seq_index = i;
+      ret = 0;
+      break;  // don't want to go beyond that which is initialized
+    }
+  }
+  return(ret);
+}
 
 /*
  * check if the specified time since last change has occured

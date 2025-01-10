@@ -1,3 +1,24 @@
+/*
+ * MechWarriorsWebNeopixels
+ *
+ * brief: define and control the playing of a sequence on a string of neopixels
+ * using buttons on a web-enabled application.
+ * 
+ * this application is based on the webServer example below and snippets from
+ * the teststrand neopixel example, provided by adafruit.
+ *
+ * sequence definition and playout is custom added code, as is the
+ * html/js/c to put up the button webpage and handle button input.
+ * 
+ * libraries used:
+ * - ArduinoJson by Benoit Blanchon v7.3.0 see documentation:
+ *   https://arduinojson.org/v7/tutorial/deserialization/
+ * - Adafruit NeoPixel by Adafruit v1.12.3
+ *
+ * Daniel J. Zimmerman  Jan 2025
+ *
+ */
+
 // @file WebServer.ino
 // @brief Example implementation using the ESP8266 WebServer.
 //
@@ -8,6 +29,7 @@
 
 #include <Arduino.h>
 #include <ESP8266WebServer.h>
+#include <ArduinoJson.h>
 
 #include "secrets.h"  // add WLAN Credentials in here.
 
@@ -125,12 +147,41 @@ void handleNetInfo() {
 
 void handleButton()  {
   char buf[128];
+  const char *seq;
+  JsonDocument jsonDoc;
+  DeserializationError err;
+
   if(server.method() == HTTP_POST)  {
     String body = server.arg("plain");
     TRACE("Button pressed: ");
     body.toCharArray(buf, sizeof(buf));
-    TRACE(buf);
+    TRACE("return buffer <%s>\n", buf);
     server.send(201);
+
+    /*
+     * parse the json to get to just the sequence label
+     * NOTE: this code is very sensitive to types of variables
+     * used in extracting values after parsing.  
+     * e.g. const char *seq; was specifically required to get the
+     * jsonDoc["sequence"] to build, apparently due to the overloading
+     * that's built into this function.
+     */
+
+    err = deserializeJson(jsonDoc, buf);
+    if(err)  {
+      TRACE("Deserialization of button failed: %s\n", err.f_str());
+    }
+    else  {
+      TRACE("json parsing successful, extracting value\n");
+      seq = jsonDoc["sequence"];
+      if(seq != NULL)  {
+        TRACE("Setting sequence to %s\n", seq);
+        if(neo_set_sequence(seq) < 0)
+          TRACE("Error setting sequence after proper detection\n");
+      }
+      else
+        TRACE("\"sequence\" not found in json data\n");
+    }
   }
   else
     server.send(405, "text/plain", "handleButton(): Method Not Allowed");

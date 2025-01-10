@@ -14,11 +14,11 @@
 	</div>
 	<br>
 		<input type='button' value='RED-MED' id='red-med' onclick="callCFunction(this)">
-		<input type='button' value='GREEN-MED' id='green-med' onclick='/$neodisable'>
+		<input type='button' value='GREEN-MED' id='green-med' onclick="callCFunction(this)">
 	<script>
 	function callCFunction(o)  {
 		let seq_data = {
-			seqence: String(o.value)
+			sequence: String(o.value)
 		}
 		let jsonData = JSON.stringify(seq_data);
 		console.log(jsonData)  // this works ... how to get to c callback in server.on?
