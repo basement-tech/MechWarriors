@@ -124,8 +124,16 @@ void handleNetInfo() {
 }  // handleNetInfo()
 
 void handleButton()  {
-    TRACE("Button pressed\n");
+  char buf[128];
+  if(server.method() == HTTP_POST)  {
+    String body = server.arg("plain");
+    TRACE("Button pressed: ");
+    body.toCharArray(buf, sizeof(buf));
+    TRACE(buf);
     server.send(201);
+  }
+  else
+    server.send(405, "text/plain", "handleButton(): Method Not Allowed");
 }
 
 // ===== Request Handler class used to answer more complex requests =====
