@@ -29,7 +29,9 @@ Adafruit_NeoPixel pixels(NEO_NUMPIXELS, NEO_PIN, NEO_TYPE);
 #define NEO_SEQ_STOPPING 3
 #define NEO_SEQ_STOPPED  4
 
-static uint8_t neo_state = NEO_SEQ_START;
+static uint8_t neo_state = NEO_SEQ_START;  // state of the cycling state machine
+uint64_t current_millis = 0; // mS of last update
+int32_t current_index = 0;   // index into the pattern array
 
 /*
  * initialize the neopixel strand and set it to off/idle
@@ -52,19 +54,14 @@ int8_t neo_set_sequence(const char *label)  {
     if(strcmp(label, neo_sequences[i].label) == 0)  {
       seq_index = i;
       ret = 0;
+      current_index = 0;
       neo_state = NEO_SEQ_START;
     }
   }
   return(ret);
 }
 
-/*
- * check if the specified time since last change has occured
- * and update the strand if so.
- */
 
-uint64_t current_millis = 0;
-int32_t current_index = 0;   // index into the pattern array
 
 /*
  * helper for writing a single pixel
@@ -83,7 +80,10 @@ void neo_write_pixel(void)  {
   }
 }
 
-
+/*
+ * check if the specified time since last change has occured
+ * and update the strand if so.
+ */
 void neo_cycle_next(void)  {
   uint64_t new_millis = 0;
 
@@ -96,6 +96,7 @@ void neo_cycle_next(void)  {
       pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
       pixels.clear(); // Set all pixel colors to 'off'
       pixels.show();   // Send the updated pixel colors to the hardware.
+      current_index = 0;
       neo_state = NEO_SEQ_STOPPED;
       break;
 

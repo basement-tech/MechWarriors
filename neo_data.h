@@ -6,7 +6,7 @@
 
 #include <c_types.h>
 
-#define MAX_SEQUENCES 2  // number of sequences to allocate
+#define MAX_SEQUENCES 3  // number of sequences to allocate
 #define MAX_NUM_SEQ_POINTS 128   // maximum number of points per sequence
 
 /*
