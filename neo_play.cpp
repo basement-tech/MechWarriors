@@ -20,10 +20,25 @@
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 Adafruit_NeoPixel pixels(NEO_NUMPIXELS, NEO_PIN, NEO_TYPE);
 
+/*
+ * housekeeping for the sequence state machine
+ */
+#define NEO_SEQ_START    0
+#define NEO_SEQ_WAIT     1
+#define NEO_SEQ_WRITE    2
+#define NEO_SEQ_STOPPING 3
+#define NEO_SEQ_STOPPED  4
+
+static uint8_t neo_state = NEO_SEQ_START;
+
+/*
+ * initialize the neopixel strand and set it to off/idle
+ */
 void neo_init(void)  {
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
   pixels.clear(); // Set all pixel colors to 'off'
   pixels.show();   // Send the updated pixel colors to the hardware.
+  neo_state = NEO_SEQ_STOPPED;
 }
 
 /*
@@ -37,7 +52,7 @@ int8_t neo_set_sequence(const char *label)  {
     if(strcmp(label, neo_sequences[i].label) == 0)  {
       seq_index = i;
       ret = 0;
-      break;  // don't want to go beyond that which is initialized
+      neo_state = NEO_SEQ_START;
     }
   }
   return(ret);
@@ -68,16 +83,22 @@ void neo_write_pixel(void)  {
   }
 }
 
-#define NEO_SEQ_START 0
-#define NEO_SEQ_WAIT 1
-#define NEO_SEQ_WRITE 2
-
-uint8_t neo_state = NEO_SEQ_START;
 
 void neo_cycle_next(void)  {
   uint64_t new_millis = 0;
 
   switch(neo_state)  {
+
+    case NEO_SEQ_STOPPED:
+      break;
+
+    case NEO_SEQ_STOPPING:
+      pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+      pixels.clear(); // Set all pixel colors to 'off'
+      pixels.show();   // Send the updated pixel colors to the hardware.
+      neo_state = NEO_SEQ_STOPPED;
+      break;
+
     case NEO_SEQ_START:
       neo_write_pixel();
       neo_state = NEO_SEQ_WAIT;
@@ -104,4 +125,11 @@ void neo_cycle_next(void)  {
     default:
       break;
   }
+}
+
+/*
+ * stop the sequence i.e. turn off neopixel strand
+ */
+void neo_cycle_stop(void)  {
+  neo_state = NEO_SEQ_STOPPING;
 }

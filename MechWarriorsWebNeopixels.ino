@@ -22,6 +22,11 @@
  * functionality:
  * - webserver
  * - LittleFS for storing files on a flash-disk (persists through firmware flashing)
+ *    (https://arduino-esp8266.readthedocs.io/en/latest/filesystem.html)
+ *   NOTE: the file system is located in the flash memory.
+ *         the board type specification says how much of the flash is reserved for the fs
+ *         seems to be reserved whether it's being used or not
+ *         littleFS is said to do wear balancing (just as the name implies)
  * - built in functions for uploading files (maybe for deleting)
  *   (note: files are overwritten by files of the same name: useful for development)
  * If not specific URL is sent to the sebserver the implementation looks for a file
@@ -94,24 +99,6 @@ ESP8266WebServer server(80);
 
 // The text of builtin files are in this header file
 #include "builtinfiles.h"
-
-/*
- * neopixel support
- */
-uint8_t neo_enable = 1;  // enable neopixel updates: 0 = not enabled
-
-void handleNeoEnable(void)  {
-  neo_enable = 1;
-  server.sendHeader("Cache-Control", "no-cache");
-  server.send(200, "text/javascript; charset=utf-8", "NeoPixels enabled\n");
-}
-
-void handleNeoDisable(void)  {
-  neo_enable = 0;
-  server.sendHeader("Cache-Control", "no-cache");
-  server.send(200, "text/javascript; charset=utf-8", "NeoPixels disabled\n");
-}
-
 
 // ===== Simple functions used to answer simple GET requests =====
 
@@ -215,7 +202,9 @@ void handleButton()  {
       seq = jsonDoc["sequence"];
       if(seq != NULL)  {
         TRACE("Setting sequence to %s\n", seq);
-        if(neo_set_sequence(seq) < 0)
+        if(strcmp(seq, "STOP") == 0)
+          neo_cycle_stop();
+        else if(neo_set_sequence(seq) < 0)
           TRACE("Error setting sequence after proper detection\n");
       }
       else
@@ -351,8 +340,6 @@ void setup(void) {
   server.on("/$list", HTTP_GET, handleListFiles);
   server.on("/$sysinfo", HTTP_GET, handleSysInfo);
   server.on("/$netinfo", HTTP_GET, handleNetInfo);
-  server.on("/$neoenable", HTTP_GET, handleNeoEnable);
-  server.on("/$neodisable", HTTP_GET, handleNeoDisable);
   server.on("/api/button", HTTP_POST, handleButton);
 
   // UPLOAD and DELETE of files in the file system using a request handler.
@@ -387,10 +374,7 @@ void setup(void) {
 // run the server...
 void loop(void) {
   server.handleClient();
-
-  if(neo_enable != 0)
-    neo_cycle_next();
-
+  neo_cycle_next();
 }  // loop()
 
 // end.
