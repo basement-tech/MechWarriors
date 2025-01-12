@@ -104,6 +104,8 @@ ESP8266WebServer server(80);
 
 // This function is called when the WebServer was requested without giving a filename.
 // This will redirect to the file index.htm when it is existing otherwise to the built-in $upload.htm page
+//
+// this is used to display the main page after having uploaded a index.htm page with buttons
 void handleRedirect() {
   TRACE("Redirect...");
   String url = "/index.htm";
@@ -111,7 +113,7 @@ void handleRedirect() {
   if (!LittleFS.exists(url)) { url = "/$update.htm"; }
 
   server.sendHeader("Location", url, true);
-  server.send(302);
+  server.send(302);  // send "found redirection" return code
 }  // handleRedirect()
 
 
@@ -156,6 +158,7 @@ void handleSysInfo() {
 }  // handleSysInfo()
 
 // This function is called when the netInfo service was requested.
+// ... added this to see if I could extend the built in functions ... worked (and useful)
 void handleNetInfo() {
   String result;
 
@@ -171,6 +174,17 @@ void handleNetInfo() {
   server.send(200, "text/javascript; charset=utf-8", result);
 }  // handleNetInfo()
 
+//
+// handle button presses from the index.htm file
+// - all buttons on the default page call this same function based
+// - on being registered with a server.on(api/button) below
+// - the javascript in index.htm constructs and sends a json string ("sequence" : "value"),
+//   as the body of the POST,
+//   to identify the identity of the specific button being pressed.
+// - non-sequence, special purpose "value"'s are intercepted and processed
+//   by this function, otherwise the value is sent to neo_set_sequence()
+//   to do what the function name says
+// 
 void handleButton()  {
   char buf[128];
   const char *seq;
@@ -190,7 +204,7 @@ void handleButton()  {
      * used in extracting values after parsing.  
      * e.g. const char *seq; was specifically required to get the
      * jsonDoc["sequence"] to build, apparently due to the overloading
-     * that's built into this function.
+     * that's built into this function (i.e. adding the const specifier).
      */
 
     err = deserializeJson(jsonDoc, buf);
@@ -336,7 +350,13 @@ void setup(void) {
   // register a redirect handler when only domain name is given.
   server.on("/", HTTP_GET, handleRedirect);
 
+  //
   // register some REST services
+  // NOTE: the server attempts to find a match with the URL's registered here,
+  // before falling back to the server.addHandler(new FileServerHandler()) below
+  // (e.g. "/api/button" intercepts POST requests for buttons ... POSTS for
+  // file operations are passed along)
+  //
   server.on("/$list", HTTP_GET, handleListFiles);
   server.on("/$sysinfo", HTTP_GET, handleSysInfo);
   server.on("/$netinfo", HTTP_GET, handleNetInfo);
