@@ -218,6 +218,8 @@ void handleButton()  {
         TRACE("Setting sequence to %s\n", seq);
         if(strcmp(seq, "STOP") == 0)
           neo_cycle_stop();
+        else if(strcmp(seq, "USER-1") == 0)
+          neo_load_sequence("/neo_user_1.json");
         else if(neo_set_sequence(seq) < 0)
           TRACE("Error setting sequence after proper detection\n");
       }

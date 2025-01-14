@@ -4,7 +4,13 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 
+#include <FS.h>        // File System for Web Server Files
+#include <LittleFS.h>  // This file system is used.
+
 #include "neo_data.h"
+
+// TRACE output simplified, can be deactivated here
+#define TRACE(...) Serial.printf(__VA_ARGS__)
 
 // When setting up the NeoPixel library, we tell it how many pixels,
 // and which pin to use to send signals. Note that for older NeoPixel
@@ -61,7 +67,66 @@ int8_t neo_set_sequence(const char *label)  {
   return(ret);
 }
 
+/*
+ * look for a label matching the argument, label,
+ * and load a sequence from file of the same name.
+ * NOTE: currently the requested sequence placeholder of the name
+ * requested must exist in neo_sequences[] for this to succeed.
+ * NOTE ALSO: that the sequence number for play must be separately set.
+ */
+int8_t neo_load_sequence(const char *label)  {
 
+  FSInfo fs_info;
+  LittleFS.info(fs_info);
+
+  int8_t ret = 0;
+  File fd;  // file pointer to read from
+  char buf[1024];  // buffer in which to read the file contents  TODO: paramaterize
+  char *pbuf;  // helper
+  char c;
+  
+  pbuf = buf;
+
+  /*
+   * can I see the FS from here ? ... yep.
+   */
+  TRACE("Total bytes in FS = %d\n", fs_info.totalBytes);
+  TRACE("Total bytes used in FS = %d\n", fs_info.usedBytes);
+
+  if (LittleFS.exists(label) == false)
+      TRACE("Filename %s does not exist in file system\n", label);
+  else  {
+    TRACE("Loading filename %s ...\n", label);
+    if((fd = LittleFS.open(label, "r")) != 0)  {
+      while(fd.available())  {
+        c = fd.read();
+        TRACE("%c", c);
+      }
+  /*
+      while((*pbuf = getc(fp)) != EOF)  {
+        pbuf++;  // read the file contents 
+        TRACE("%c", *pbuf);
+      }
+      pbuf++;
+      *pbuf = '\0';  // terminate the string
+  */
+      fd.close();
+    }
+  //  TRACE("%s", buf);
+  }
+
+
+/*
+  int8_t ret = -1;
+  for(int i = 0; i < MAX_SEQUENCES; i++)  {
+    if(strcmp(label, neo_sequences[i].label) == 0)  {
+      ret = 0;
+      neo_state = NEO_SEQ_START;
+    }
+  }
+*/
+  return(ret);
+}
 
 /*
  * helper for writing a single pixel
