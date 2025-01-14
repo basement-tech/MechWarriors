@@ -83,8 +83,7 @@ int8_t neo_load_sequence(const char *label)  {
   File fd;  // file pointer to read from
   char buf[1024];  // buffer in which to read the file contents  TODO: paramaterize
   char *pbuf;  // helper
-  char c;
-  
+ 
   pbuf = buf;
 
   /*
@@ -99,20 +98,12 @@ int8_t neo_load_sequence(const char *label)  {
     TRACE("Loading filename %s ...\n", label);
     if((fd = LittleFS.open(label, "r")) != 0)  {
       while(fd.available())  {
-        c = fd.read();
-        TRACE("%c", c);
+        *pbuf++ = fd.read();
       }
-  /*
-      while((*pbuf = getc(fp)) != EOF)  {
-        pbuf++;  // read the file contents 
-        TRACE("%c", *pbuf);
-      }
-      pbuf++;
-      *pbuf = '\0';  // terminate the string
-  */
+      *pbuf = '\0';  // terminate the char string
       fd.close();
     }
-  //  TRACE("%s", buf);
+    TRACE("%s", buf);
   }
 
 
