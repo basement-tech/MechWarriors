@@ -128,7 +128,21 @@ int8_t neo_load_sequence(const char *label)  {
      * and adjust the sequence index to point to this new sequence
      */
     else  {
-      int32_t points[] = jsonDoc("points");
+      JsonArray points = jsonDoc["points"].as<JsonArray>();
+      const char *label;
+      label = jsonDoc["label"];
+      TRACE("For sequence \"%s\" : \n", label);
+      
+      for(JsonObject obj : points)  {
+      uint8_t r, g, b, w;
+      int32_t t;
+      r = obj["r"];
+      g = obj["g"];
+      b = obj["b"];
+      w = obj["w"];
+      t = obj["t"];
+      TRACE("colors = %d %d %d %d  interval = %d\n", r, g, b, w, t);
+      }
     }
   }
 
