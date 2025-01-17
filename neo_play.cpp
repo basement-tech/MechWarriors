@@ -52,19 +52,37 @@ void neo_init(void)  {
 }
 
 /*
- * which/set sequence are we playing out
- * returns: -1 if the label doesn't match a sequence
+ * return the index in neo_sequences[] that matches
+ * the label given as an argument.  Do *not* set the global
+ * index value that is used to play the sequence.
  */
-int8_t seq_index = 0;
-int8_t neo_set_sequence(const char *label)  {
+int8_t neo_find_sequence(const char *label)  {
   int8_t ret = -1;
   for(int i = 0; i < MAX_SEQUENCES; i++)  {
-    if(strcmp(label, neo_sequences[i].label) == 0)  {
-      seq_index = i;
-      ret = 0;
-      current_index = 0;
-      neo_state = NEO_SEQ_START;
-    }
+    if(strcmp(label, neo_sequences[i].label) == 0)
+      ret = i;
+  }
+  return(ret);
+}
+
+
+/*
+ * which/set sequence are we playing out
+ * returns: -1 if the label doesn't match a sequence
+ * reset the playout index and state if the found index
+ * is different than the currently running index.
+ */
+int8_t seq_index = -1;  // global used to hold the index of the currently running sequence
+int8_t neo_set_sequence(const char *label)  {
+  int8_t ret = -1;
+  int8_t new_index = 0;
+
+  new_index = neo_find_sequence(label);
+  if((new_index >= 0) && (new_index != seq_index))  {
+    seq_index = new_index;  // set the sequence index that is to be played
+    ret = 0; // success
+    current_index = 0;  // reset the pixel count
+    neo_state = NEO_SEQ_START;  // cause the state machine to start at the start
   }
   return(ret);
 }
@@ -76,7 +94,7 @@ int8_t neo_set_sequence(const char *label)  {
  * requested must exist in neo_sequences[] for this to succeed.
  * NOTE ALSO: that the sequence number for play must be separately set.
  */
-int8_t neo_load_sequence(const char *label)  {
+int8_t neo_load_sequence(const char *file)  {
 
   FSInfo fs_info;
   LittleFS.info(fs_info);
@@ -101,11 +119,11 @@ int8_t neo_load_sequence(const char *label)  {
    * read the contents of the user sequence file and put it
    * in the character buffer buf
    */
-  if (LittleFS.exists(label) == false)
-      TRACE("Filename %s does not exist in file system\n", label);
+  if (LittleFS.exists(file) == false)
+      TRACE("Filename %s does not exist in file system\n", file);
   else  {
-    TRACE("Loading filename %s ...\n", label);
-    if((fd = LittleFS.open(label, "r")) != 0)  {
+    TRACE("Loading filename %s ...\n", file);
+    if((fd = LittleFS.open(file, "r")) != 0)  {
       while(fd.available())  {
         *pbuf++ = fd.read();
       }
@@ -116,32 +134,59 @@ int8_t neo_load_sequence(const char *label)  {
 
     /*
      * deserialize the json contents of the file which
-     * is now in buf
+     * is now in buf  -> JsonDocument jsonDoc
      */
     err = deserializeJson(jsonDoc, buf);
     if(err)  {
-      TRACE("Deserialization of file %s failed ... no change in sequence\n", label);
+      TRACE("Deserialization of file %s failed ... no change in sequence\n", file);
     }
 
     /*
-     * move the sequence steps to neo_sequences[] to be played out
-     * and adjust the sequence index to point to this new sequence
+     * jsonDoc contains an array of points as JsonObjects
+     * convert to a JsonArray points[]
      */
     else  {
       JsonArray points = jsonDoc["points"].as<JsonArray>();
       const char *label;
       label = jsonDoc["label"];
       TRACE("For sequence \"%s\" : \n", label);
-      
-      for(JsonObject obj : points)  {
-      uint8_t r, g, b, w;
-      int32_t t;
-      r = obj["r"];
-      g = obj["g"];
-      b = obj["b"];
-      w = obj["w"];
-      t = obj["t"];
-      TRACE("colors = %d %d %d %d  interval = %d\n", r, g, b, w, t);
+      int8_t seq_idx = neo_find_sequence(label);
+
+      /*
+       * iterate over the points in the array
+       * this syntax was introduced in C++11 and is equivalent to:
+       * for (size_t i = 0; i < points.size(); i++) {
+       *   JsonObject obj = points[i];
+       */
+      if(seq_idx < 0)  {
+        TRACE("neo_load_sequence: no placeholder for %s in sequence array\n", label);
+      }
+
+      /*
+       * if the label was found, load the points from the json file
+       * into the neo_sequences[] array to be played out
+       *
+       * TODO: super-verbose for now for debugging
+       */
+      else  {
+        uint16_t i = 0;
+        for(JsonObject obj : points)  {
+          uint8_t r, g, b, w;
+          int32_t t;
+          r = obj["r"];
+          g = obj["g"];
+          b = obj["b"];
+          w = obj["w"];
+          t = obj["t"];
+          TRACE("colors = %d %d %d %d  interval = %d\n", r, g, b, w, t);
+          neo_sequences[seq_idx].point[i].red = r;
+          neo_sequences[seq_idx].point[i].green = g;
+          neo_sequences[seq_idx].point[i].blue = b;
+          neo_sequences[seq_idx].point[i].white = w;
+          neo_sequences[seq_idx].point[i].ms_after_last = t;
+          i++;
+        }
+        neo_set_sequence(label);
       }
     }
   }

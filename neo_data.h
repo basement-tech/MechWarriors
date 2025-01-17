@@ -22,7 +22,7 @@ typedef struct {
 
 typedef struct  {
   const char *label;
-  const neo_seq_point_t point[MAX_NUM_SEQ_POINTS];
+  neo_seq_point_t point[MAX_NUM_SEQ_POINTS];
 } neo_data_t;
 
 #define NEO_NUMPIXELS 10
