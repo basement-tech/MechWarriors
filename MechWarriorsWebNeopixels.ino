@@ -33,6 +33,11 @@
  * named index.htm.  That's the mechanism that I used for the button page (i.e. uploaded
  * html/js for the page in a file called index.htm)
  *
+ * Some major discoveries:
+ *
+ * How to get a value from an htlm button to a c language callback ?
+ * major learning: existence of server.arg("plain")
+
  * Regarding data flow from the button (html) -> js -> c callback:
  * html puts up buttons with an onclick: directive; that calls the 
  * javascript to make a POST to the server.  The button has an value= that
@@ -50,6 +55,41 @@
  * html/button .............callCfunction() ...........handleButton() 
  * html button "value" -> js o.value -> POST body -> server.arg("plain")
  *
+ *
+ * How to parse/deserialize a simple json string?
+ * major learning: overloading and function of jsonDoc[]
+ * see this in handleButton():
+ *  const char *seq;
+ *  JsonDocument jsonDoc;
+ *  DeserializationError err;
+ *  ...
+ *  err = deserializeJson(jsonDoc, buf);
+ *  if(err)  {
+ *    TRACE("Deserialization of button failed: %s\n", err.f_str());
+ *  }
+ *  else  {
+ *    TRACE("json parsing successful, extracting value\n");
+ *    seq = jsonDoc["sequence"];
+ *
+ * jsonDoc[] is overloaded with a finite list of return types.
+ * that's why const char *seq was necessary.
+ *
+ * 
+ * How to open and read a file using littleFS ?
+ * major learning: once the file is open, the read functions are provided
+ *                 by the "file descriptor"-like class functions
+ * see this in neo_load_sequence():
+ *  TRACE("Loading filename %s ...\n", label);
+ *  if((fd = LittleFS.open(label, "r")) != 0)  {
+ *    while(fd.available())  {
+ *      *pbuf++ = fd.read();
+ *      ...
+ * 
+ * How to deserialize a json string with two dimensional array ?
+ *
+ * don't know yet ... working it out in neo_load_sequence()
+ *
+ *
  * TODO:
  * o understand how the upload/delete is handled since it's a POST.
  *   determine if it has any conflicts with the button implementation.
@@ -59,7 +99,7 @@
  * o file based user uploaded sequences (probably json formatted files)
  * 
  *
- * Daniel J. Zimmerman  Jan 2025
+ * (c) Daniel J. Zimmerman  Jan 2025
  *
  */
 

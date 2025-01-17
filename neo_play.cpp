@@ -7,6 +7,8 @@
 #include <FS.h>        // File System for Web Server Files
 #include <LittleFS.h>  // This file system is used.
 
+#include <ArduinoJson.h>
+
 #include "neo_data.h"
 
 // TRACE output simplified, can be deactivated here
@@ -79,6 +81,9 @@ int8_t neo_load_sequence(const char *label)  {
   FSInfo fs_info;
   LittleFS.info(fs_info);
 
+  JsonDocument jsonDoc;
+  DeserializationError err;
+
   int8_t ret = 0;
   File fd;  // file pointer to read from
   char buf[1024];  // buffer in which to read the file contents  TODO: paramaterize
@@ -92,6 +97,10 @@ int8_t neo_load_sequence(const char *label)  {
   TRACE("Total bytes in FS = %d\n", fs_info.totalBytes);
   TRACE("Total bytes used in FS = %d\n", fs_info.usedBytes);
 
+  /*
+   * read the contents of the user sequence file and put it
+   * in the character buffer buf
+   */
   if (LittleFS.exists(label) == false)
       TRACE("Filename %s does not exist in file system\n", label);
   else  {
@@ -104,6 +113,23 @@ int8_t neo_load_sequence(const char *label)  {
       fd.close();
     }
     TRACE("%s", buf);
+
+    /*
+     * deserialize the json contents of the file which
+     * is now in buf
+     */
+    err = deserializeJson(jsonDoc, buf);
+    if(err)  {
+      TRACE("Deserialization of file %s failed ... no change in sequence\n", label);
+    }
+
+    /*
+     * move the sequence steps to neo_sequences[] to be played out
+     * and adjust the sequence index to point to this new sequence
+     */
+    else  {
+      int32_t points[] = jsonDoc("points");
+    }
   }
 
 
