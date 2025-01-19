@@ -5,6 +5,12 @@
  */
 #include "neo_data.h"
 
+const neo_user_t neo_user_files[MAX_USER_SEQ] = {
+  {"USER-1", "/neo_user_1.json"},
+  {"USER-2", "/neo_user_2.json"},
+  {"USER-3", "/neo_user_3.json"},
+};
+
 // adjust MAX_SEQUENCES in neo_data.h to match number initialized
 neo_data_t neo_sequences[MAX_SEQUENCES] = {
   { "RED-MED",
@@ -159,4 +165,14 @@ neo_data_t neo_sequences[MAX_SEQUENCES] = {
       { 0, 0, 0, 0, -1 },
     }
   }, // user-1
+    { "USER-2",
+    {
+      { 0, 0, 0, 0, -1 },
+    }
+  }, // user-2
+    { "USER-3",
+    {
+      { 0, 0, 0, 0, -1 },
+    }
+  }, // user-3
 };

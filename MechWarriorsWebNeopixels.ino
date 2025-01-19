@@ -226,17 +226,21 @@ void handleNetInfo() {
 //   to do what the function name says
 // 
 void handleButton()  {
+  int8_t neoerr = NEO_SUCCESS;
   char buf[128];
+  char *file = NULL;
   const char *seq;
   JsonDocument jsonDoc;
   DeserializationError err;
 
   if(server.method() == HTTP_POST)  {
+    /*
+     * get the value of the button pressed
+     */
     String body = server.arg("plain");
     TRACE("Button pressed: ");
     body.toCharArray(buf, sizeof(buf));
     TRACE("return buffer <%s>\n", buf);
-    server.send(201);
 
     /*
      * parse the json to get to just the sequence label
@@ -250,22 +254,46 @@ void handleButton()  {
     err = deserializeJson(jsonDoc, buf);
     if(err)  {
       TRACE("Deserialization of button failed: %s\n", err.f_str());
+      neoerr = NEO_DESERR;
     }
     else  {
       TRACE("json parsing successful, extracting value\n");
       seq = jsonDoc["sequence"];
+      /*
+       * process the button that was pressed based on the seq string
+       */
       if(seq != NULL)  {
         TRACE("Setting sequence to %s\n", seq);
+        /*
+         * was it the stop button
+         */
         if(strcmp(seq, "STOP") == 0)
           neo_cycle_stop();
-        else if(strcmp(seq, "USER-1") == 0)
-          neo_load_sequence("/neo_user_1.json");
-        else if(neo_set_sequence(seq) < 0)
+
+        /*
+         * if not STOP, see if it was a USER defined sequence
+         * if so, load the file and set the sequence
+         */
+        else if((neoerr = neo_is_user(seq, &(file))) == NEO_SUCCESS)  {
+          neoerr = neo_load_sequence(file);
+        }
+
+        /*
+         * if not STOP or USER-x, then attempt to set the sequence,
+         * assuming that it's a pre-defined button
+         */
+        else if((neoerr = neo_set_sequence(seq)) != NEO_SUCCESS)
           TRACE("Error setting sequence after proper detection\n");
       }
-      else
+      else  {
+        neoerr = NEO_NOPLACE;
         TRACE("\"sequence\" not found in json data\n");
+      }
     }
+    if(neoerr != NEO_SUCCESS)
+      server.send(404, "text/plain", "handleButton(): Couldn't process button press");
+    else
+      server.send(201);
   }
   else
     server.send(405, "text/plain", "handleButton(): Method Not Allowed");
