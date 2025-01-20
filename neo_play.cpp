@@ -159,7 +159,7 @@ int8_t neo_load_sequence(const char *file)  {
   else  {
 
     TRACE("Loading filename %s ...\n", file);
-    if((fd = LittleFS.open(file, "r")) <= 0)  
+    if((fd = LittleFS.open(file, "r")) == false)  
       ret = NEO_FILE_LOAD_NOFILE;
 
     else  {
@@ -264,7 +264,7 @@ void neo_cycle_next(void)  {
       break;
 
     case NEO_SEQ_STOPPING:
-      pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+      //pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
       pixels.clear(); // Set all pixel colors to 'off'
       pixels.show();   // Send the updated pixel colors to the hardware.
       current_index = 0;
@@ -304,4 +304,5 @@ void neo_cycle_next(void)  {
  */
 void neo_cycle_stop(void)  {
   neo_state = NEO_SEQ_STOPPING;
+  seq_index = -1;  // so it doesn't match
 }

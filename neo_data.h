@@ -13,12 +13,17 @@
 typedef struct  {
   const char *label;
   const char *file;
+  int8_t      loaded;
 } neo_user_t;
 
 /*
  * return error codes for reading a user sequence file
  * and maybe other functions
  */
+#define   NEO_LOADED              1
+#define   NEO_EMPTY               0
+#define   NEO_STALE              -1
+
 #define   NEO_SUCCESS             0
 #define   NEO_DESERR             -1
 #define   NEO_NOPLACE            -2
