@@ -237,7 +237,7 @@ int8_t neo_load_sequence(const char *file)  {
 }
 
 /*
- * helper for writing a single pixel
+ * helper for writing a single color to all pixels
  */
 void neo_write_pixel(bool clear)  {
   if(clear != 0)  pixels->clear(); // Set all pixel colors to 'off'
@@ -245,7 +245,7 @@ void neo_write_pixel(bool clear)  {
   /*
     * send the next point in the sequence to the strand
     */
-  for(int i=0; i < NEO_NUMPIXELS; i++) { // For each pixel...
+  for(int i=0; i < pixels->numPixels(); i++) { // For each pixel...
     pixels->setPixelColor(i, pixels->Color( neo_sequences[seq_index].point[current_index].red, 
                                           neo_sequences[seq_index].point[current_index].green,
                                           neo_sequences[seq_index].point[current_index].blue));
