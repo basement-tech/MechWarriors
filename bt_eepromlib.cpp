@@ -47,11 +47,12 @@ struct eeprom_in  {
   int  buflen;      /* length of size in EEPROM */
 };
 
-#define EEPROM_ITEMS 5
+#define EEPROM_ITEMS 6
 struct eeprom_in eeprom_input[EEPROM_ITEMS] {
   {"",                                       "Validation",    mon_config.valid,            sizeof(mon_config.valid)},
   {"Enter WIFI SSID",                        "WIFI SSID",     mon_config.wlan_ssid,        sizeof(mon_config.wlan_ssid)},
   {"Enter WIFI Password",                    "WIFI Password", mon_config.wlan_pass,        sizeof(mon_config.wlan_pass)},
+  {"Enter Fixed IP Addr",                    "Fixed IP Addr", mon_config.ipaddr,           sizeof(mon_config.ipaddr)},
   {"Enter GMT offset (+/- secs)",            "GMT offset",    mon_config.tz_offset_gmt,    sizeof(mon_config.tz_offset_gmt)},
   {"Enter debug level (0 -> 9)",             "debug level",   mon_config.debug_level,      sizeof(mon_config.debug_level)},
 };
@@ -60,6 +61,7 @@ void init_eeprom_input()  {
     eeprom_input[0].value = mon_config.valid;
     eeprom_input[1].value = mon_config.wlan_ssid;
     eeprom_input[2].value = mon_config.wlan_pass;
+    eeprom_input[3].value = mon_config.ipaddr;
     eeprom_input[3].value = mon_config.tz_offset_gmt;
     eeprom_input[4].value = mon_config.debug_level;
 }

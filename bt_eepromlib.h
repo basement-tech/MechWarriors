@@ -26,7 +26,7 @@
  * be sure to update this string if you change the 
  * net_config struct below.
  */
-#define EEPROM_VALID  "valid_v0.6.1"
+#define EEPROM_VALID  "valid_v0.6.2"
 
 /*
  * map of the parameters stored in EEPROM
@@ -38,7 +38,8 @@ struct net_config  {
 char valid[32];            /* eeprom version validation string */
 char wlan_ssid[64];        /* wifi ssid */
 char wlan_pass[64];        /* wifi password */
-char tz_offset_gmt[64];     /* sample time offset from GMT (+/-) in seconds (e.g. -21600 = CST) */
+char ipaddr[64];           /* fixed ip address if desired/set */
+char tz_offset_gmt[64];    /* sample time offset from GMT (+/-) in seconds (e.g. -21600 = CST) */
 char debug_level[2];       /* display messages at different levels of detail */
 };
  
