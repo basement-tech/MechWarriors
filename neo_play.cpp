@@ -237,8 +237,9 @@ int8_t neo_load_sequence(const char *file)  {
 /*
  * helper for writing a single pixel
  */
-void neo_write_pixel(void)  {
-  pixels.clear(); // Set all pixel colors to 'off'
+void neo_write_pixel(bool clear)  {
+  if(clear != 0)  pixels.clear(); // Set all pixel colors to 'off'
+
   /*
     * send the next point in the sequence to the strand
     */
@@ -272,7 +273,7 @@ void neo_cycle_next(void)  {
       break;
 
     case NEO_SEQ_START:
-      neo_write_pixel();
+      neo_write_pixel(true);
       neo_state = NEO_SEQ_WAIT;
       break;
     
@@ -290,7 +291,7 @@ void neo_cycle_next(void)  {
     case NEO_SEQ_WRITE:
       if(neo_sequences[seq_index].point[current_index].ms_after_last < 0)  // list terminator: nothing to write
           current_index = 0;
-      neo_write_pixel();
+      neo_write_pixel(false);
       neo_state = NEO_SEQ_WAIT;
       break;
 
