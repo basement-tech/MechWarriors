@@ -5,21 +5,41 @@
 		<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
 		<style>
 			label{float:left;text-align:left;width:150px;}
+			.color-control-button{width:100%;padding:4px;}
+			#red-med{background-color:red;}
+			#green-med{background-color:green;}
+			#purple-slow{background-color:purple;}
 			li {list-style:none;}
+			.button-grid {
+				display:flex;
+				flex-direction: column;
+				gap: 1rem;
+			}
+			.main-title {
+				font-family:Arial, Helvetica, sans-serif;
+				font-size:32px;
+				font-weight: bold;
+				color:beige;
+			}
+			body {
+				background-color:rgb(45, 45, 71);
+			}
 		</style>
 	</head>
 	<body>
-	<div>
+	<div class="main-title">
 	The Underhives of Necromunda
 	</div>
 	<br>
-		<input type='button' value='RED-MED' id='red-med' onclick="callCFunction(this)">
-		<input type='button' value='GREEN-MED' id='green-med' onclick="callCFunction(this)">
-		<input type='button' value='PURPLE-SLOW' id='purple-slow' onclick="callCFunction(this)">
-		<input type='button' value='USER-1' id='user-1' onclick="callCFunction(this)">
-		<input type='button' value='USER-2' id='user-2' onclick="callCFunction(this)">
-		<input type='button' value='USER-3' id='user-3' onclick="callCFunction(this)">
-		<input type='button' value='STOP' id='stop' onclick="callCFunction(this)">
+	<div class="button-grid">
+		<input type='button' class="color-control-button" value='RED-MED' id='red-med' onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='GREEN-MED' id='green-med' onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='PURPLE-SLOW' id='purple-slow' onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='USER-1' id='user-1' onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='USER-2' id='user-2' onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='USER-3' id='user-3' onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='STOP' id='stop' onclick="callCFunction(this)">
+	</div>
 	<script>
 	function callCFunction(o)  {
 		let seq_data = {

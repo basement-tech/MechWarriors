@@ -89,6 +89,12 @@
  *
  * don't know yet ... working it out in neo_load_sequence()
  *
+ * Last couple of neopixels were flickering during playback?
+ *
+ * seems eliminating the clear all pixels before writing the new
+ * value seemed to eliminate it.  Although might have just been that
+ * the update got faster ?
+ *
  *
  * TODO:
  * o understand how the upload/delete is handled since it's a POST.
