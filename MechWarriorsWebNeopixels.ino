@@ -120,6 +120,7 @@
 #include <FS.h>        // File System for Web Server Files
 #include <LittleFS.h>  // This file system is used.
 
+#include "bt_eepromlib.h"
 #include "neo_data.h"  // for neopixels
 
 // mark parameters not used in example
@@ -129,10 +130,11 @@
 #define TRACE(...) Serial.printf(__VA_ARGS__)
 
 // name of the server. You reach it using http://webserver
-#define HOSTNAME "mechwarriors"
+#define HOSTNAME "warhammer"
 
 // local time zone definition (US Central Daylight Time)
 #define TIMEZONE "CST6CDT,M3.2.0/2:00:00,M11.1.0/2:00:00"
+
 
 // need a WebServer for http access on port 80.
 ESP8266WebServer server(80);
@@ -379,6 +381,35 @@ void setup(void) {
   Serial.begin(115200);
   Serial.setDebugOutput(false);
 
+  /*
+   * initialize the EEPROM
+   */
+  eeprom_begin();
+  
+  Serial.println("Press any key to change settings");
+
+  int8_t tries = 5;
+  bool out = false;
+  char inChar = '\0';
+  while((out == false) && (tries > 0))  {
+    Serial.print(tries);Serial.print(" . ");
+  // check for incoming serial data:
+    if (Serial.available() > 0) {
+      // read incoming serial data:
+      inChar = Serial.read();
+      out = true;
+    }
+    delay(1000);
+    tries--;
+  }
+  Serial.println();
+
+  /*
+   * prompt the user for input if the out bool was set above
+   * (if not, this function does nothing)
+   */
+  eeprom_user_input(out);
+
   TRACE("Starting WebServer example...\n");
 
   TRACE("Mounting the filesystem...\n");
@@ -387,6 +418,14 @@ void setup(void) {
     delay(2000);
     ESP.restart();
   }
+
+  /*
+   * setup wifi to use a fixed IP address
+   */
+  const byte ip[] = {192, 168, 1, 37}; // IP address
+  const byte gateway[] = {192, 168, 1, 1}; // Gateway address
+  const byte subnet[] = {255, 255, 255, 0}; // Subnet mask
+  WiFi.config(ip, gateway, subnet); // Set static IP ... DZ added this
 
   // start WiFI
   WiFi.mode(WIFI_STA);
