@@ -25,7 +25,10 @@
  *
  */
 
+
 #include <stdlib.h>  // for atoi()
+#include <string.h>  // for strncpy()
+#include <ctype.h>  // for isdigit()
 
 #include <EEPROM.h>
 
@@ -358,27 +361,69 @@ void eeprom_user_input(bool out)  {
 
 
 
+
+/*
+ * convert a string representation of a v4 IP address to the
+ * four-octet version that WIFI classes seem to want.
+ * - the input string contents is not changed
+ * - input validation:
+ *    four conversions required
+ *    octet value in range of 0 - 255
+ *    only numbers between delimiters allowed
+ *    premature end of string
+ * arguments: sipaddr - null terminated string representation of ip address
+ *            octets[] - values are returned in this array
+ *
+ * return:  0 if successfully confirmed
+ *          -1 if any error is encountered
+ */
 int8_t eeprom_convert_ip(char *sipaddr, uint8_t octets[])  {
   int8_t ret = 0;
-  int8_t dots = 0;  // number of dots found as error check
+  int8_t converts = 0;  // number of dots found as error check
   int32_t value = 0;  // temp in case out of bounds
 
   char lbuf[32], *plbuf;  //a little big incase a malformed addr is given
+  int8_t nbuf = sizeof(lbuf);  // don't go past the end of the buffer; not an index
 
   plbuf = lbuf;
-  for(int i = 0; i <= 3; i++)  {
-    while((*sipaddr != '.') && (*sipaddr != '\0'))  {
-      *plbuf++ = *sipaddr++;  // find the next delimiter
+  for(int i = 0; ((i <= 3) && (ret == 0)); i++)  {
+    while((*sipaddr != '.') && (*sipaddr != '\0') && (ret == 0))  {
+      if(!isdigit(*sipaddr))
+        ret = -1;
+      else if(--nbuf <= 0)
+        ret = -1;
+      else
+        *plbuf++ = *sipaddr++;  // find the next delimiter
     }
-    if(*sipaddr == '.') dots++;
-    *plbuf = '\0';
-    value = atoi(lbuf);
-    if((value > 255) || (value < 0)) ret = -1;
-    else octets[i] = value;
-    plbuf = lbuf;
-    sipaddr++;
-  }
-  if(dots != 3) ret = -1;
+    /*
+     * normal while() exit; delimiter or terminator found, convert
+     */
+    if(ret == 0) {
+      *plbuf = '\0';  // terminate the octet string buffer
+      value = atoi(lbuf);  // convert to integer
+      if((value > 255) || (value < 0)) ret = -1;  // range validation
+      else {
+         octets[i] = value;  // assign to return array
+         converts++;
+      }
+      plbuf = lbuf;  // reset octet string buffer
+    }
+
+    /*
+     * test to make sure that the end of string
+     * happened as it should and/or is the local buffer
+     * about to be overrun
+     */
+    if(*sipaddr == '\0')  {
+      if(converts != 4)  // end of string reached before three delimiters
+        ret = -1;  // prematurely reached end of string
+    }
+    else if(--nbuf <= 0)  // like 192.168.1.5555555555555555555555...
+      ret = -1;
+    else  // success ... continue
+      sipaddr++;  // increment past the '.'
+    }
+
   return(ret);
 }
 
