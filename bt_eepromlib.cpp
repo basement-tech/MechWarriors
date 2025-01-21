@@ -24,8 +24,11 @@
  * Copied this from a previous project and modified it to work with this one - DJZ
  *
  */
- 
+
+#include <stdlib.h>  // for atoi()
+
 #include <EEPROM.h>
+
 #include "bt_eepromlib.h"
 
 /*
@@ -47,7 +50,7 @@ struct eeprom_in  {
   int  buflen;      /* length of size in EEPROM */
 };
 
-#define EEPROM_ITEMS 6
+#define EEPROM_ITEMS 7
 struct eeprom_in eeprom_input[EEPROM_ITEMS] {
   {"",                                       "Validation",    mon_config.valid,            sizeof(mon_config.valid)},
   {"Enter WIFI SSID",                        "WIFI SSID",     mon_config.wlan_ssid,        sizeof(mon_config.wlan_ssid)},
@@ -55,6 +58,7 @@ struct eeprom_in eeprom_input[EEPROM_ITEMS] {
   {"Enter Fixed IP Addr",                    "Fixed IP Addr", mon_config.ipaddr,           sizeof(mon_config.ipaddr)},
   {"Enter GMT offset (+/- secs)",            "GMT offset",    mon_config.tz_offset_gmt,    sizeof(mon_config.tz_offset_gmt)},
   {"Enter debug level (0 -> 9)",             "debug level",   mon_config.debug_level,      sizeof(mon_config.debug_level)},
+  {"Enter # of neopixels",                   "# neopixel",    mon_config.neocount,         sizeof(mon_config.neocount)},
 };
 
 void init_eeprom_input()  {
@@ -64,6 +68,7 @@ void init_eeprom_input()  {
     eeprom_input[3].value = mon_config.ipaddr;
     eeprom_input[3].value = mon_config.tz_offset_gmt;
     eeprom_input[4].value = mon_config.debug_level;
+    eeprom_input[5].value = mon_config.neocount;
 }
 
 /*
@@ -349,5 +354,31 @@ void eeprom_user_input(bool out)  {
     Serial.println("EEPROM data NOT valid ... reset and try enter valid data");
     Serial.read();
   }
+}
+
+
+
+int8_t eeprom_convert_ip(char *sipaddr, uint8_t octets[])  {
+  int8_t ret = 0;
+  int8_t dots = 0;  // number of dots found as error check
+  int32_t value = 0;  // temp in case out of bounds
+
+  char lbuf[32], *plbuf;  //a little big incase a malformed addr is given
+
+  plbuf = lbuf;
+  for(int i = 0; i <= 3; i++)  {
+    while((*sipaddr != '.') && (*sipaddr != '\0'))  {
+      *plbuf++ = *sipaddr++;  // find the next delimiter
+    }
+    if(*sipaddr == '.') dots++;
+    *plbuf = '\0';
+    value = atoi(lbuf);
+    if((value > 255) || (value < 0)) ret = -1;
+    else octets[i] = value;
+    plbuf = lbuf;
+    sipaddr++;
+  }
+  if(dots != 3) ret = -1;
+  return(ret);
 }
 

@@ -135,6 +135,8 @@
 // local time zone definition (US Central Daylight Time)
 #define TIMEZONE "CST6CDT,M3.2.0/2:00:00,M11.1.0/2:00:00"
 
+// get access to the eeprom based configuration structure
+net_config *pmon_config = get_mon_config_ptr();
 
 // need a WebServer for http access on port 80.
 ESP8266WebServer server(80);
@@ -421,8 +423,15 @@ void setup(void) {
 
   /*
    * setup wifi to use a fixed IP address
+   * attempt to convert the ip address from the eeprom, and
+   * if that fails load a default address
+   * TODO: in progress - DJZ
    */
-  const byte ip[] = {192, 168, 1, 37}; // IP address
+  uint8_t ip[4]; // ip address as octets
+  if(eeprom_convert_ip(pmon_config->ipaddr, ip) != 0)  {
+    TRACE("Failed to convert eeprom IP address value ... loading default\n");
+    ip[0] = 192; ip[1] = 168; ip[2] = 1; ip[3] = 37;
+  }
   const byte gateway[] = {192, 168, 1, 1}; // Gateway address
   const byte subnet[] = {255, 255, 255, 0}; // Subnet mask
   WiFi.config(ip, gateway, subnet); // Set static IP ... DZ added this
@@ -443,7 +452,7 @@ void setup(void) {
     delay(500);
     TRACE(".");
   }
-  TRACE("connected.\n");
+  TRACE("connected at %s\n", WiFi.localIP().toString().c_str());
 
   // Ask for the current time using NTP request builtin into ESP firmware.
   TRACE("Setup ntp...\n");

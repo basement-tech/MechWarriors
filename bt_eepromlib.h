@@ -26,7 +26,7 @@
  * be sure to update this string if you change the 
  * net_config struct below.
  */
-#define EEPROM_VALID  "valid_v0.6.2"
+#define EEPROM_VALID  "valid_v0.6.3"
 
 /*
  * map of the parameters stored in EEPROM
@@ -41,6 +41,7 @@ char wlan_pass[64];        /* wifi password */
 char ipaddr[64];           /* fixed ip address if desired/set */
 char tz_offset_gmt[64];    /* sample time offset from GMT (+/-) in seconds (e.g. -21600 = CST) */
 char debug_level[2];       /* display messages at different levels of detail */
+char neocount[8];          /* number of neopixels in the strand */
 };
  
 /*
@@ -53,6 +54,7 @@ void getall_eeprom_inputs();
 void dispall_eeprom_parms();
 bool eeprom_validation(char match[]);
 int l_read_string(char *buf, int blen, bool echo);
+int8_t eeprom_convert_ip(char *sipaddr, uint8_t octets[]);
 
 void eeprom_begin(void);
 void eeprom_get(void);
