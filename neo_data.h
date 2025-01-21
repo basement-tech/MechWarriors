@@ -5,6 +5,7 @@
 #ifndef __NEO_DATA_H__
 
 #include <c_types.h>
+#include <Adafruit_NeoPixel.h>
 
 #define MAX_USER_SEQ  3  // maximum number of user buttons/files
 #define MAX_SEQUENCES 6  // number of sequences to allocate
@@ -62,7 +63,7 @@ typedef struct  {
  * public functions relating to neopixels
  */
 void neo_cycle_next(void);
-void neo_init(void);
+void neo_init(uint16_t numPixels, int16_t pin, neoPixelType pixelFormat);
 int8_t neo_is_user(const char *label, char **file);
 int8_t neo_load_sequence(const char *label);
 int8_t neo_set_sequence(const char *label);

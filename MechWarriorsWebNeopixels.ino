@@ -462,7 +462,10 @@ void setup(void) {
 
   // Ask for the current time using NTP request builtin into ESP firmware.
   TRACE("Setup ntp...\n");
-  configTime(TIMEZONE, "pool.ntp.org");
+  if(strlen(pmon_config->tz_offset_gmt) > 0)
+    configTime(pmon_config->tz_offset_gmt, "pool.ntp.org");
+  else
+    configTime(TIMEZONE, "pool.ntp.org");
 
   TRACE("Register service handlers...\n");
 
@@ -508,8 +511,11 @@ void setup(void) {
   TRACE("hostname=%s\n", WiFi.getHostname());
 
   // initialize neopixel strip
-  TRACE("Initialize neopixel strip...\n");
-  neo_init();
+  TRACE("Initialize neopixel strip with %d pixels...\n", atoi(pmon_config->neocount));
+  if(atoi(pmon_config->neocount) > 0)
+    neo_init(atoi(pmon_config->neocount), NEO_PIN, NEO_TYPE);
+  else
+    neo_init(NEO_NUMPIXELS, NEO_PIN, NEO_TYPE);
 
 
 }  // setup

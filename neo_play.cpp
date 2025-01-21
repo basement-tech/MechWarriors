@@ -26,7 +26,7 @@
 //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
-Adafruit_NeoPixel pixels(NEO_NUMPIXELS, NEO_PIN, NEO_TYPE);
+Adafruit_NeoPixel *pixels;
 
 /*
  * housekeeping for the sequence state machine
@@ -44,10 +44,12 @@ int32_t current_index = 0;   // index into the pattern array
 /*
  * initialize the neopixel strand and set it to off/idle
  */
-void neo_init(void)  {
-  pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-  pixels.clear(); // Set all pixel colors to 'off'
-  pixels.show();   // Send the updated pixel colors to the hardware.
+void neo_init(uint16_t numPixels, int16_t pin, neoPixelType pixelFormat)  {
+  pixels = new Adafruit_NeoPixel(numPixels, pin, pixelFormat);
+
+  pixels->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+  pixels->clear(); // Set all pixel colors to 'off'
+  pixels->show();   // Send the updated pixel colors to the hardware.
   neo_state = NEO_SEQ_STOPPED;
 }
 
@@ -238,17 +240,17 @@ int8_t neo_load_sequence(const char *file)  {
  * helper for writing a single pixel
  */
 void neo_write_pixel(bool clear)  {
-  if(clear != 0)  pixels.clear(); // Set all pixel colors to 'off'
+  if(clear != 0)  pixels->clear(); // Set all pixel colors to 'off'
 
   /*
     * send the next point in the sequence to the strand
     */
   for(int i=0; i < NEO_NUMPIXELS; i++) { // For each pixel...
-    pixels.setPixelColor(i, pixels.Color( neo_sequences[seq_index].point[current_index].red, 
+    pixels->setPixelColor(i, pixels->Color( neo_sequences[seq_index].point[current_index].red, 
                                           neo_sequences[seq_index].point[current_index].green,
                                           neo_sequences[seq_index].point[current_index].blue));
 
-  pixels.show();   // Send the updated pixel colors to the hardware.
+  pixels->show();   // Send the updated pixel colors to the hardware.
   }
 }
 
@@ -265,9 +267,9 @@ void neo_cycle_next(void)  {
       break;
 
     case NEO_SEQ_STOPPING:
-      //pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-      pixels.clear(); // Set all pixel colors to 'off'
-      pixels.show();   // Send the updated pixel colors to the hardware.
+      //pixels->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+      pixels->clear(); // Set all pixel colors to 'off'
+      pixels->show();   // Send the updated pixel colors to the hardware.
       current_index = 0;
       neo_state = NEO_SEQ_STOPPED;
       break;
