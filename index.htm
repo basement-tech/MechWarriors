@@ -2,6 +2,7 @@
 <html>
 	<head>
 		<title>The Underhives of Necromunda</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
 		<style>
 			label{float:left;text-align:left;width:150px;}
@@ -9,6 +10,7 @@
 			#red-med{background-color:red;}
 			#green-med{background-color:green;}
 			#purple-slow{background-color:purple;}
+			#stop{background-color:rgb(248, 244, 7);}
 			li {list-style:none;}
 			.button-grid {
 				display:flex;
@@ -52,7 +54,12 @@
 			headers: { 'Content-Type': 'application/json' },
 			body: jsonData
 		})
-		.then(response => response.text())
+		.then(response => {
+			if(response.status != 201) {
+				window.alert("Error processing button press");
+			}
+			return response.text();
+		})
 		.then(result => console.log(result))
 		.catch(error => console.error('Error:', error));
 	}

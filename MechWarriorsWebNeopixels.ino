@@ -303,7 +303,7 @@ void handleButton()  {
     if(neoerr != NEO_SUCCESS)
       server.send(404, "text/plain", "handleButton(): Couldn't process button press");
     else
-      server.send(201);
+      server.send(201, "text/plain", "handleButton(): success");
   }
   else
     server.send(405, "text/plain", "handleButton(): Method Not Allowed");
