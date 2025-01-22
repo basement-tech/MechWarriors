@@ -11,12 +11,6 @@
 #define MAX_SEQUENCES 6  // number of sequences to allocate
 #define MAX_NUM_SEQ_POINTS 256   // maximum number of points per sequence
 
-typedef struct  {
-  const char *label;
-  const char *file;
-  int8_t      loaded;
-} neo_user_t;
-
 /*
  * return error codes for reading a user sequence file
  * and maybe other functions
@@ -64,16 +58,14 @@ typedef struct  {
  */
 void neo_cycle_next(void);
 void neo_init(uint16_t numPixels, int16_t pin, neoPixelType pixelFormat);
-int8_t neo_is_user(const char *label, char **file);
+int8_t neo_is_user(const char *label);
 int8_t neo_load_sequence(const char *label);
 int8_t neo_set_sequence(const char *label);
 void neo_cycle_stop(void);
 
 /*
  * array of neopixel sequences and the index to the currently playing one
- * neo_user_files[] : map of button labels to user file names
  */
-extern const neo_user_t neo_user_files[MAX_USER_SEQ];
 extern neo_data_t neo_sequences[MAX_SEQUENCES];  // sequence specifications
 extern int8_t seq_index;  // which sequence is being played out
 

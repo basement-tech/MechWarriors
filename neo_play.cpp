@@ -91,30 +91,14 @@ int8_t neo_set_sequence(const char *label)  {
 
 /*
  * check if the label matches a predefined USER button
- * and return the filename to be loaded.  Just return the pointer
- * since we're searching an initialized const array of strings.
+ * NOTE: this was simplified when the filename attribute was
+ * added to the html file
  */
-int8_t neo_is_user(const char *label, char **file)  {
+int8_t neo_is_user(const char *label)  {
   int8_t ret = NEO_FILE_LOAD_NOTUSER;
-  *file = NULL;
 
-  /*
-   * determine if label points to a user sequence file
-   */
-  int8_t i = 0;
-  while((i < MAX_USER_SEQ) && (ret != NEO_SUCCESS)) {
-    if(strcmp(label, neo_user_files[i].label) == 0)
-      ret = NEO_SUCCESS;
-    else
-      i++;
-  }
-
-  /*
-   * if the label points to a user sequence file, 
-   * copy the filename
-   */
-  if(ret == NEO_SUCCESS)
-    *file = (char *)(neo_user_files[i].file);
+  if(strncmp(label, "USER", 4) == 0)
+    ret = NEO_SUCCESS;
 
   return(ret);
 }

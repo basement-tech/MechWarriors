@@ -5,11 +5,6 @@
  */
 #include "neo_data.h"
 
-const neo_user_t neo_user_files[MAX_USER_SEQ] = {
-  {"USER-1", "/neo_user_1.json", NEO_EMPTY},
-  {"USER-2", "/neo_user_2.json", NEO_EMPTY},
-  {"USER-3", "/neo_user_3.json", NEO_EMPTY},
-};
 
 // adjust MAX_SEQUENCES in neo_data.h to match number initialized
 neo_data_t neo_sequences[MAX_SEQUENCES] = {

@@ -239,7 +239,7 @@ void handleButton()  {
   int8_t neoerr = NEO_SUCCESS;
   char buf[128];
   char *file = NULL;
-  const char *seq;
+  const char *seq, *filename;
   JsonDocument jsonDoc;
   DeserializationError err;
 
@@ -284,8 +284,8 @@ void handleButton()  {
          * if not STOP, see if it was a USER defined sequence
          * if so, load the file and set the sequence
          */
-        else if((neoerr = neo_is_user(seq, &(file))) == NEO_SUCCESS)  {
-          neoerr = neo_load_sequence(file);
+        else if((neo_is_user(seq)) == NEO_SUCCESS)  {
+          neoerr = neo_load_sequence(jsonDoc["file"]);
         }
 
         /*
