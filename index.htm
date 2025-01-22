@@ -38,18 +38,19 @@
 	</div>
 	<br>
 	<div class="button-grid">
-		<input type='button' class="color-control-button" value='RED-MED' id='red-med' onclick="callCFunction(this)">
-		<input type='button' class="color-control-button" value='GREEN-MED' id='green-med' onclick="callCFunction(this)">
-		<input type='button' class="color-control-button" value='PURPLE-SLOW' id='purple-slow' onclick="callCFunction(this)">
-		<input type='button' class="color-control-button" value='USER-1' id='user-1' onclick="callCFunction(this)">
-		<input type='button' class="color-control-button" value='USER-2' id='user-2' onclick="callCFunction(this)">
-		<input type='button' class="color-control-button" value='USER-3' id='user-3' onclick="callCFunction(this)">
-		<input type='button' class="color-control-button" value='STOP' id='stop' onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='RED-MED'     id='red-med'     data-file=''                onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='GREEN-MED'   id='green-med'   data-file=''                onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='PURPLE-SLOW' id='purple-slow' data-file=''                onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='USER-1'      id='user-1'      data-file='neo_user_1.json' onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='USER-2'      id='user-2'      data-file='neo_user_2.json' onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='USER-3'      id='user-3'      data-file='neo_user_3.json' onclick="callCFunction(this)">
+		<input type='button' class="color-control-button" value='STOP'        id='stop'        data-file=''                onclick="callCFunction(this)">
 	</div>
 	<script>
 	function callCFunction(o)  {
 		let seq_data = {
-			sequence: String(o.value)
+			sequence: String(o.value),
+			file: String(o.dataset.file)
 		}
 		let jsonData = JSON.stringify(seq_data);
 		console.log(jsonData)  // this works ... how to get to c callback in server.on?
