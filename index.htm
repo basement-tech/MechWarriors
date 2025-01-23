@@ -1,41 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 	<head>
 		<title>The Underhives of Necromunda</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
-		<style>
-			label{float:left;text-align:left;width:150px;}
-			.color-control-button{width:100%;padding:4px;}
-			#red-med{background-color:red;}
-			#green-med{background-color:green;}
-			#purple-slow{background-color:purple;}
-			#stop{
-				background-color:rgb(248, 244, 7);
-			}
-			li {
-				list-style:none;
-			}
-			.button-grid {
-				display:flex;
-				flex-direction: column;
-				gap: 1rem;
-			}
-			.main-title {
-				font-family:Arial, Helvetica, sans-serif;
-				font-size:32px;
-				font-weight: bold;
-				color:beige;
-			}
-			body {
-				background-color:rgb(45, 45, 71);
-			}
-		</style>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="styles.css">
+		<script src="index.js" defer></script>
 	</head>
 	<body>
-	<div class="main-title">
+	<h1 class="main-title">
 	The Underhives of Necromunda
-	</div>
+	</h1>
 	<br>
 	<!-- More user buttons can be added to those below:
 	 	1) copy and paste one of the existing USER-x button lines
@@ -46,36 +24,48 @@
 		      - - other buttons may not start with those four characters
 	 -->
 	<div class="button-grid">
-		<input type='button' class="color-control-button" value='RED-MED'     id='red-med'     data-file=''                onclick="callCFunction(this)">
-		<input type='button' class="color-control-button" value='GREEN-MED'   id='green-med'   data-file=''                onclick="callCFunction(this)">
-		<input type='button' class="color-control-button" value='PURPLE-SLOW' id='purple-slow' data-file=''                onclick="callCFunction(this)">
-		<input type='button' class="color-control-button" value='USER-1'      id='user-1'      data-file='neo_user_1.json' onclick="callCFunction(this)">
-		<input type='button' class="color-control-button" value='USER-2'      id='user-2'      data-file='neo_user_2.json' onclick="callCFunction(this)">
-		<input type='button' class="color-control-button" value='USER-3'      id='user-3'      data-file='neo_user_3.json' onclick="callCFunction(this)">
-		<input type='button' class="color-control-button" value='STOP'        id='stop'        data-file=''                onclick="callCFunction(this)">
+		<input type="button" 
+		       class="color-control-button" 
+		       value="RED-MED" 
+		       id="red-med" 
+		       data-file="" 
+		       onclick="callCFunction(this)">
+		<input type="button" 
+		       class="color-control-button" 
+		       value="GREEN-MED" 
+		       id="green-med" 
+		       data-file="" 
+		       onclick="callCFunction(this)">
+		<input type="button" 
+		       class="color-control-button" 
+		       value="PURPLE-SLOW" 
+		       id="purple-slow" 
+		       data-file="" 
+		       onclick="callCFunction(this)">
+		<input type="button" 
+		       class="color-control-button" 
+		       value="USER-1" 
+		       id="user-1" 
+		       data-file="neo_user_1.json" 
+		       onclick="callCFunction(this)">
+		<input type="button" 
+		       class="color-control-button" 
+		       value="USER-2" 
+		       id="user-2" 
+		       data-file="neo_user_2.json" 
+		       onclick="callCFunction(this)">
+		<input type="button" 
+		       class="color-control-button" 
+		       value="USER-3" 
+		       id="user-3" 
+		       data-file="neo_user_3.json" 
+		       onclick="callCFunction(this)">
+		<input type="button" 
+		       class="color-control-button" 
+		       value="STOP" 
+		       id="stop" 
+		       data-file="" 
+		       onclick="callCFunction(this)">
 	</div>
-	<script>
-	function callCFunction(o)  {
-		let seq_data = {
-			sequence: String(o.value),
-			file: String(o.dataset.file)
-		}
-		let jsonData = JSON.stringify(seq_data);
-		console.log(jsonData)  // this works ... how to get to c callback in server.on?
-		fetch('/api/button', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: jsonData
-		})
-		.then(response => {
-			if(response.status != 201) {
-				window.alert("Error processing button press");
-			}
-			return response.text();
-		})
-		.then(result => console.log(result))
-		.catch(error => console.error('Error:', error));
-	}
-	</script>
 </html>
 
