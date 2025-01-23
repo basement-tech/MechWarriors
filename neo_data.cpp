@@ -170,4 +170,14 @@ neo_data_t neo_sequences[MAX_SEQUENCES] = {
       { 0, 0, 0, 0, -1 },
     }
   }, // user-3
+  { "USER-4",
+    {
+      { 0, 0, 0, 0, -1 },
+    }
+  }, // user-4
+  { "USER-5",
+    {
+      { 0, 0, 0, 0, -1 },
+    }
+  }, // user-5
 };

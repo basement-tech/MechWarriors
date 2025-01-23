@@ -40,6 +40,7 @@ Adafruit_NeoPixel *pixels;
 static uint8_t neo_state = NEO_SEQ_START;  // state of the cycling state machine
 uint64_t current_millis = 0; // mS of last update
 int32_t current_index = 0;   // index into the pattern array
+int8_t strategy_idx; // which strategy should be used to play a user file
 
 /*
  * initialize the neopixel strand and set it to off/idle

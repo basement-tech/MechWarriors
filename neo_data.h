@@ -8,7 +8,7 @@
 #include <Adafruit_NeoPixel.h>
 
 #define MAX_USER_SEQ  3  // maximum number of user buttons/files
-#define MAX_SEQUENCES 6  // number of sequences to allocate
+#define MAX_SEQUENCES 8  // number of sequences to allocate
 #define MAX_NUM_SEQ_POINTS 256   // maximum number of points per sequence
 
 /*
@@ -45,6 +45,11 @@ typedef struct  {
   neo_seq_point_t point[MAX_NUM_SEQ_POINTS];
 } neo_data_t;
 
+typedef struct  {
+  const char *strategy;
+  int8_t strat_idx;
+} neo_strategy_t;
+
 
 /*
  * describes the hardware configuration of the neopixel strip
@@ -68,6 +73,7 @@ void neo_cycle_stop(void);
  */
 extern neo_data_t neo_sequences[MAX_SEQUENCES];  // sequence specifications
 extern int8_t seq_index;  // which sequence is being played out
+extern int8_t strategy_idx; // which strategy should be used to play a user file
 
 #define __NEO_DATA_H__
 #endif
