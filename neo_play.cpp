@@ -260,13 +260,14 @@ void neo_cycle_next(void)  {
       break;
 
     case NEO_SEQ_START:
-      neo_write_pixel(true);
+      neo_write_pixel(true);  // clear the strand and write the first value
       neo_state = NEO_SEQ_WAIT;
       break;
     
     case NEO_SEQ_WAIT:
       /*
        * if the timer has expired (or assumed that if current_millis == 0, then it will be)
+       * i.e. done waiting move to the next state
        */
       if(((new_millis = millis()) - current_millis) >= neo_sequences[seq_index].point[current_index].ms_after_last)  {
         current_millis = new_millis;
@@ -276,6 +277,10 @@ void neo_cycle_next(void)  {
       break;
     
     case NEO_SEQ_WRITE:
+      /*
+       * if we've reached the end of the sequence, rewind and write;
+       * if not, just write.  move to the next state.
+       */
       if(neo_sequences[seq_index].point[current_index].ms_after_last < 0)  // list terminator: nothing to write
           current_index = 0;
       neo_write_pixel(false);

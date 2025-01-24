@@ -45,9 +45,20 @@ typedef struct  {
   neo_seq_point_t point[MAX_NUM_SEQ_POINTS];
 } neo_data_t;
 
+/*
+ * how should the contents of the sequence file be interpreted
+ * an played out
+ */
+typedef enum {
+  SEQ_STRAT_POINTS,  // each point in the sequence is specified
+  SEQ_STRAT_CHASE,   // attributes of a chase sequence are specified
+  SEQ_STRAT_PONG,    // attributes of single moving pixel are specified
+  SEQ_STRAT_RAINBOW  // attributes of a dynamic rainbow pattern are specified
+}  seq_strategy_t;
+
 typedef struct  {
-  const char *strategy;
-  int8_t strat_idx;
+  const char *strategy;  // string representation of strategy 
+  seq_strategy_t strat_idx;  // faster to use than strcmp() each time
 } neo_strategy_t;
 
 
