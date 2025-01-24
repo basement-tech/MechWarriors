@@ -267,12 +267,14 @@ void start_noop(bool clear) {}
  */
 void neo_points_start(bool clear) {
   neo_write_pixel(true);  // clear the strand and write the first value
+  neo_state = NEO_SEQ_WAIT;
 }
 
 void neo_points_write(void) {
   if(neo_sequences[seq_index].point[current_index].ms_after_last < 0)  // list terminator: nothing to write
     current_index = 0;
   neo_write_pixel(false);
+  neo_state = NEO_SEQ_WAIT;
 }
 
 void neo_points_wait(void)  {
@@ -285,17 +287,32 @@ void neo_points_wait(void)  {
   if(((new_millis = millis()) - current_millis) >= neo_sequences[seq_index].point[current_index].ms_after_last)  {
     current_millis = new_millis;
     current_index++;
+    neo_state = NEO_SEQ_WRITE;
   }
+
 }
 
 void neo_points_stopping(void)  {
   pixels->clear(); // Set all pixel colors to 'off'
   pixels->show();   // Send the updated pixel colors to the hardware.
   current_index = 0;
+
+  neo_state = NEO_SEQ_STOPPED;
 }
 
 // end of SEQ_STRAT_POINTS callbacks
 
+/*
+ * SEQ_STRAT_SINGLE
+ */
+
+void neo_single_write(void) {
+  if(neo_sequences[seq_index].point[current_index].ms_after_last < 0)  // list terminator: nothing to write
+    current_index = 0;
+  neo_write_pixel(false);
+}
+
+// end of SEQ_STRAT_SINGLE callbacks
 
 /*
  * function calls by strategy for each state in the playback machine
@@ -323,22 +340,18 @@ void neo_cycle_next(void)  {
 
     case NEO_SEQ_STOPPING:
       seq_callbacks[current_strategy].stopping();
-      neo_state = NEO_SEQ_STOPPED;
       break;
 
     case NEO_SEQ_START:
       seq_callbacks[current_strategy].start(true);  // clear the strand and write the first value
-      neo_state = NEO_SEQ_WAIT;
       break;
     
     case NEO_SEQ_WAIT:
       seq_callbacks[current_strategy].wait();
-      neo_state = NEO_SEQ_WRITE;
       break;
     
     case NEO_SEQ_WRITE:
       seq_callbacks[current_strategy].write();
-      neo_state = NEO_SEQ_WAIT;
       break;
 
     default:
