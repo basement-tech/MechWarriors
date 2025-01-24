@@ -97,12 +97,18 @@
  *
  *
  * TODO:
- * o understand how the upload/delete is handled since it's a POST.
- *   determine if it has any conflicts with the button implementation.
- * o single shot sequences using -2 at termination
+ * o figure out how the DELETE works and implement it
+ * o single shot sequences using strategy attribute
  * o more built in sequences
- * o scaling for cell phone versus computer (e.g. button size/layout)
- * o file based user uploaded sequences (probably json formatted files)
+ * o different strategies for interpretting json sequence files and playout them out
+ * o how to set debug levels and clean up use of TRACE()
+ * o how can I publicise the ip address when using DHCP
+ * o add eeprom parm for enable/disable DHCP
+ * o how many connections can be made to the server at a time?
+ * o Is keep-alive being used ?  After sitting, sometimes takes 10 seconds to respond
+ * o download and install esp8266 littleFS plugin and reduce size of filesystem
+ * o should a timer be added to drive frequency of neopixel strand updates (1mS ?) ?
+ * o look at how the number of USER sequences can be dynamically done (malloc-ish)
  * 
  *
  * (c) Daniel J. Zimmerman  Jan 2025
