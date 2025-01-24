@@ -39,9 +39,10 @@ Adafruit_NeoPixel *pixels;
 #define NEO_SEQ_STOPPED  4
 static uint8_t neo_state = NEO_SEQ_START;  // state of the cycling state machine
 
+seq_strategy_t current_strategy = SEQ_STRAT_POINTS;
+
 uint64_t current_millis = 0; // mS of last update
 int32_t current_index = 0;   // index into the pattern array
-int8_t strategy_idx; // which strategy should be used to play a user file
 
 /*
  * return the index in neo_sequences[] that matches
@@ -276,7 +277,7 @@ void neo_points_write(void) {
 
 void neo_points_wait(void)  {
   uint64_t new_millis = 0;
-  
+
   /*
     * if the timer has expired (or assumed that if current_millis == 0, then it will be)
     * i.e. done waiting move to the next state
@@ -292,6 +293,9 @@ void neo_points_stopping(void)  {
   pixels->show();   // Send the updated pixel colors to the hardware.
   current_index = 0;
 }
+
+// end of SEQ_STRAT_POINTS callbacks
+
 
 /*
  * function calls by strategy for each state in the playback machine
@@ -314,41 +318,26 @@ void neo_cycle_next(void)  {
   switch(neo_state)  {
 
     case NEO_SEQ_STOPPED:
+      seq_callbacks[current_strategy].stopped();
       break;
 
     case NEO_SEQ_STOPPING:
-      //pixels->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-      pixels->clear(); // Set all pixel colors to 'off'
-      pixels->show();   // Send the updated pixel colors to the hardware.
-      current_index = 0;
+      seq_callbacks[current_strategy].stopping();
       neo_state = NEO_SEQ_STOPPED;
       break;
 
     case NEO_SEQ_START:
-      neo_write_pixel(true);  // clear the strand and write the first value
+      seq_callbacks[current_strategy].start(true);  // clear the strand and write the first value
       neo_state = NEO_SEQ_WAIT;
       break;
     
     case NEO_SEQ_WAIT:
-      /*
-       * if the timer has expired (or assumed that if current_millis == 0, then it will be)
-       * i.e. done waiting move to the next state
-       */
-      if(((new_millis = millis()) - current_millis) >= neo_sequences[seq_index].point[current_index].ms_after_last)  {
-        current_millis = new_millis;
-        current_index++;
-      }
+      seq_callbacks[current_strategy].wait();
       neo_state = NEO_SEQ_WRITE;
       break;
     
     case NEO_SEQ_WRITE:
-      /*
-       * if we've reached the end of the sequence, rewind and write;
-       * if not, just write.  move to the next state.
-       */
-      if(neo_sequences[seq_index].point[current_index].ms_after_last < 0)  // list terminator: nothing to write
-          current_index = 0;
-      neo_write_pixel(false);
+      seq_callbacks[current_strategy].write();
       neo_state = NEO_SEQ_WAIT;
       break;
 
