@@ -28,6 +28,7 @@
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 Adafruit_NeoPixel *pixels;
 
+
 /*
  * housekeeping for the sequence state machine
  */
@@ -36,38 +37,11 @@ Adafruit_NeoPixel *pixels;
 #define NEO_SEQ_WRITE    2
 #define NEO_SEQ_STOPPING 3
 #define NEO_SEQ_STOPPED  4
-
-/*
- * mapping of the functions called for each state in the playback machine
- * to the strategy being used to play it.
- */
-typedef struct {
-  int8_t state;
-  int8_t (*start)(void);
-  int8_t (*wait)(void);
-  int8_t (*write)(void);
-  int8_t (*stopping)(void);
-  int8_t (*stopped)(void);
-} seq_callbacks_t;
-
-seq_callbacks_t seq_callbacks[NEO_SEQ_STRATEGIES];
-
 static uint8_t neo_state = NEO_SEQ_START;  // state of the cycling state machine
+
 uint64_t current_millis = 0; // mS of last update
 int32_t current_index = 0;   // index into the pattern array
 int8_t strategy_idx; // which strategy should be used to play a user file
-
-/*
- * initialize the neopixel strand and set it to off/idle
- */
-void neo_init(uint16_t numPixels, int16_t pin, neoPixelType pixelFormat)  {
-  pixels = new Adafruit_NeoPixel(numPixels, pin, pixelFormat);
-
-  pixels->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-  pixels->clear(); // Set all pixel colors to 'off'
-  pixels->show();   // Send the updated pixel colors to the hardware.
-  neo_state = NEO_SEQ_STOPPED;
-}
 
 /*
  * return the index in neo_sequences[] that matches
@@ -253,6 +227,82 @@ void neo_write_pixel(bool clear)  {
   pixels->show();   // Send the updated pixel colors to the hardware.
   }
 }
+
+
+
+/*
+ * mapping of the functions called for each state in the playback machine
+ * to the strategy being used to play it.
+ */
+typedef struct {
+  seq_strategy_t strategy;
+  void (*start)(bool clear);
+  void (*wait)(void);
+  void (*write)(void);
+  void (*stopping)(void);
+  void (*stopped)(void);
+} seq_callbacks_t;
+
+/*
+ * initialize the neopixel strand and set it to off/idle
+ */
+void neo_init(uint16_t numPixels, int16_t pin, neoPixelType pixelFormat)  {
+  pixels = new Adafruit_NeoPixel(numPixels, pin, pixelFormat);
+
+  pixels->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+  pixels->clear(); // Set all pixel colors to 'off'
+  pixels->show();   // Send the updated pixel colors to the hardware.
+  neo_state = NEO_SEQ_STOPPED;
+}
+
+/*
+ * TODO: figure out a better way to do this
+ */
+void noop(void) {}
+void start_noop(bool clear) {}
+
+/*
+ * SEQ_STRAT_POINTS
+ */
+void neo_points_start(bool clear) {
+  neo_write_pixel(true);  // clear the strand and write the first value
+}
+
+void neo_points_write(void) {
+  if(neo_sequences[seq_index].point[current_index].ms_after_last < 0)  // list terminator: nothing to write
+    current_index = 0;
+  neo_write_pixel(false);
+}
+
+void neo_points_wait(void)  {
+  uint64_t new_millis = 0;
+  
+  /*
+    * if the timer has expired (or assumed that if current_millis == 0, then it will be)
+    * i.e. done waiting move to the next state
+    */
+  if(((new_millis = millis()) - current_millis) >= neo_sequences[seq_index].point[current_index].ms_after_last)  {
+    current_millis = new_millis;
+    current_index++;
+  }
+}
+
+void neo_points_stopping(void)  {
+  pixels->clear(); // Set all pixel colors to 'off'
+  pixels->show();   // Send the updated pixel colors to the hardware.
+  current_index = 0;
+}
+
+/*
+ * function calls by strategy for each state in the playback machine
+ */
+seq_callbacks_t seq_callbacks[NEO_SEQ_STRATEGIES] = {
+//  strategy          start                   wait              write                stopping             stopped
+  { SEQ_STRAT_POINTS, neo_points_start,  neo_points_wait,   neo_points_write,    neo_points_stopping,      noop},
+  { SEQ_STRAT_SINGLE, start_noop,           noop,   noop,    noop,       noop},
+  { SEQ_STRAT_CHASE,  start_noop,           noop,   noop,    noop,       noop},
+  { SEQ_STRAT_PONG,   start_noop,           noop,   noop,    noop,       noop},
+};
 
 /*
  * check if the specified time since last change has occured

@@ -58,11 +58,6 @@ typedef enum {
   SEQ_STRAT_RAINBOW  // attributes of a dynamic rainbow pattern are specified
 }  seq_strategy_t;
 
-typedef struct  {
-  const char *strategy;  // string representation of strategy 
-  seq_strategy_t strat_idx;  // faster to use than strcmp() each time
-} neo_strategy_t;
-
 
 /*
  * describes the hardware configuration of the neopixel strip
