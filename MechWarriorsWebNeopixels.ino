@@ -440,15 +440,22 @@ void setup(void) {
    * TODO: in progress - DJZ
    */
   uint8_t ip[4]; // ip address as octets
-  if(eeprom_convert_ip(pmon_config->ipaddr, ip) != 0)  {
-    TRACE("Failed to convert eeprom IP address value ... loading default\n");
-    ip[0] = 192; ip[1] = 168; ip[2] = 1; ip[3] = 37;
-  }
-  const byte gateway[] = {192, 168, 1, 1}; // Gateway address
-  const byte subnet[] = {255, 255, 255, 0}; // Subnet mask
-  WiFi.config(ip, gateway, subnet); // Set static IP ... DZ added this
 
-  // start WiFI
+  /*
+   * if eeprom config indicates that DHCP is disabled,
+   * set the fixed ip address
+   */
+  if(strcmp(pmon_config->dhcp_enable, "false") == 0)  {
+    if(eeprom_convert_ip(pmon_config->ipaddr, ip) != 0)  {
+      TRACE("Failed to convert eeprom IP address value ... loading default\n");
+      ip[0] = 192; ip[1] = 168; ip[2] = 1; ip[3] = 37;
+    }
+    const byte gateway[] = {192, 168, 1, 1}; // Gateway address
+    const byte subnet[] = {255, 255, 255, 0}; // Subnet mask
+    WiFi.config(ip, gateway, subnet); // Set static IP ... DZ added this
+  }
+
+  // start WiFI ... DHCP by default, unless above is executed
   WiFi.mode(WIFI_STA);
   if (strlen(ssid) == 0) {
     WiFi.begin();

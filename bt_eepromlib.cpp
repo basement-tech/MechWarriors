@@ -47,31 +47,46 @@ struct net_config mon_config;
  * the structure determines the byte-for-byte contents of the eeprom data.
  */
 struct eeprom_in  {
-  char prompt[64];  /* user visible prompt */
-  char label[32];   /* label when echoing contents of eeprom */
-  char *value;      /* pointer to the data in net_config (mon_config) */
-  int  buflen;      /* length of size in EEPROM */
+  char prompt[64];   // user visible prompt
+  char label[32];    // label when echoing contents of eeprom
+  char initial[64];  // sized at largest of net_config members
+  char *value;       // pointer to the data in net_config (mon_config)
+  int  buflen;       // length of size in EEPROM
 };
 
-#define EEPROM_ITEMS 7
+/*
+ * NOTE: validation must be at index = 0
+ */
+#define EEPROM_ITEMS 8
 struct eeprom_in eeprom_input[EEPROM_ITEMS] {
-  {"",                                       "Validation",    mon_config.valid,            sizeof(mon_config.valid)},
-  {"Enter WIFI SSID",                        "WIFI SSID",     mon_config.wlan_ssid,        sizeof(mon_config.wlan_ssid)},
-  {"Enter WIFI Password",                    "WIFI Password", mon_config.wlan_pass,        sizeof(mon_config.wlan_pass)},
-  {"Enter Fixed IP Addr",                    "Fixed IP Addr", mon_config.ipaddr,           sizeof(mon_config.ipaddr)},
-  {"Enter GMT offset (+/- secs)",            "GMT offset",    mon_config.tz_offset_gmt,    sizeof(mon_config.tz_offset_gmt)},
-  {"Enter debug level (0 -> 9)",             "debug level",   mon_config.debug_level,      sizeof(mon_config.debug_level)},
-  {"Enter # of neopixels",                   "# neopixel",    mon_config.neocount,         sizeof(mon_config.neocount)},
+  {"",                                       "Validation",    "",                                       mon_config.valid,            sizeof(mon_config.valid)},
+  {"DHCP Enable (true, false)",              "WIFI DHCP",     "false",                                  mon_config.dhcp_enable,      sizeof(mon_config.dhcp_enable)},
+  {"Enter WIFI SSID",                        "WIFI SSID",     "my_ssid",                                mon_config.wlan_ssid,        sizeof(mon_config.wlan_ssid)},
+  {"Enter WIFI Password",                    "WIFI Password", "my_passwd",                              mon_config.wlan_pass,        sizeof(mon_config.wlan_pass)},
+  {"Enter Fixed IP Addr",                    "Fixed IP Addr", "192.168.1.37",                           mon_config.ipaddr,           sizeof(mon_config.ipaddr)},
+  {"Enter GMT offset (POSIX string)",        "GMT offset",    "CST6CDT,M3.2.0/2:00:00,M11.1.0/2:00:00", mon_config.tz_offset_gmt,    sizeof(mon_config.tz_offset_gmt)},
+  {"Enter debug level (0 -> 9)",             "debug level",   "0",                                      mon_config.debug_level,      sizeof(mon_config.debug_level)},
+  {"Enter # of neopixels",                   "# neopixel",    "24",                                     mon_config.neocount,         sizeof(mon_config.neocount)},
 };
+
+/*
+ * load the defaults ... skip validation since that determines
+ * if this is executed
+ */
+void set_eeprom_initial(void)  {
+  for(int8_t i = 1; i < EEPROM_ITEMS; i++)
+    strncpy(eeprom_input[i].value, eeprom_input[i].initial, eeprom_input[i].buflen);
+}
 
 void init_eeprom_input()  {
     eeprom_input[0].value = mon_config.valid;
-    eeprom_input[1].value = mon_config.wlan_ssid;
-    eeprom_input[2].value = mon_config.wlan_pass;
-    eeprom_input[3].value = mon_config.ipaddr;
-    eeprom_input[3].value = mon_config.tz_offset_gmt;
-    eeprom_input[4].value = mon_config.debug_level;
-    eeprom_input[5].value = mon_config.neocount;
+    eeprom_input[1].value = mon_config.dhcp_enable;
+    eeprom_input[2].value = mon_config.wlan_ssid;
+    eeprom_input[3].value = mon_config.wlan_pass;
+    eeprom_input[4].value = mon_config.ipaddr;
+    eeprom_input[5].value = mon_config.tz_offset_gmt;
+    eeprom_input[6].value = mon_config.debug_level;
+    eeprom_input[7].value = mon_config.neocount;
 }
 
 /*
@@ -297,10 +312,23 @@ void eeprom_user_input(bool out)  {
    * present previous, valid data from EEPROM as defaults
    */
   if(out == true)  {
+    /*
+     * if the eeprom contains valid contents from a previously
+     * successful user input session, just get it.
+     *
+     * if not, load the default/compiled in values as initial
+     * eeprom values
+     *
+     * ... proceed to get user input
+     */
     if(eeprom_validation((char *)EEPROM_VALID) == 0)  {
       eeprom_get();  /* if the EEPROM is valid, get the whole contents */
       Serial.println();
       dispall_eeprom_parms();
+    }
+    else  {
+      Serial.println("Notice: eeprom contents invalid or first time ... loading defaults");
+      set_eeprom_initial();
     }
 
     /*
