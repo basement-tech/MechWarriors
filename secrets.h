@@ -10,8 +10,8 @@
 
 // add you wifi network name and PassPhrase or use WiFi Manager
 #ifndef STASSID
-#define STASSID "ZEther"
-#define STAPSK "GeorgiaO1887"
+#define STASSID "yourssid"
+#define STAPSK "yourpasswd"
 #endif
 
 const char *ssid = STASSID;
