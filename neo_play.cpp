@@ -37,6 +37,21 @@ Adafruit_NeoPixel *pixels;
 #define NEO_SEQ_STOPPING 3
 #define NEO_SEQ_STOPPED  4
 
+/*
+ * mapping of the functions called for each state in the playback machine
+ * to the strategy being used to play it.
+ */
+typedef struct {
+  int8_t state;
+  int8_t (*start)(void);
+  int8_t (*wait)(void);
+  int8_t (*write)(void);
+  int8_t (*stopping)(void);
+  int8_t (*stopped)(void);
+} seq_callbacks_t;
+
+seq_callbacks_t seq_callbacks[NEO_SEQ_STRATEGIES];
+
 static uint8_t neo_state = NEO_SEQ_START;  // state of the cycling state machine
 uint64_t current_millis = 0; // mS of last update
 int32_t current_index = 0;   // index into the pattern array
