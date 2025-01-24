@@ -217,12 +217,14 @@ void handleSysInfo() {
 // ... added this to see if I could extend the built in functions ... worked (and useful)
 void handleNetInfo() {
   String result;
+  long rssi = 0;
 
   result += "{ NETWORK STATUS, \n";
   result += "  {";
     if(WiFi.status() == WL_CONNECTED) result += " \"status \": connected,\n";
     else result += " \"status \": disconnected,\n";  // not sure how this will ever be sent
     result += "    \"ip_address\":" + WiFi.localIP().toString() + ",\n";
+    result += "    \"WiFi RSSI\":" + String(WiFi.RSSI()) + ",\n";
     result += "  }\n";
   result += "}\n";
 
