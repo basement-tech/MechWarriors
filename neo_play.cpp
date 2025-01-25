@@ -353,6 +353,9 @@ static int8_t slowp_dir = 1;  // +1 -1 to indicate the direction we're traveling
 static uint32_t delta_time;  // calculated time between changes
 static float delta_r, delta_g, delta_b;  // calculated increment for each color ... must be floats or gets rounded to 0 between calls
 static float slowp_r, slowp_g, slowp_b;  // remember where we are in the sequence
+#define SLOWP_FLICKERS 5
+int16_t slowp_flickers[SLOWP_FLICKERS];  // random points to flicker
+uint8_t slowp_flicker_idx = 0;
 
 void neo_slowp_start(bool clear)  {
 
@@ -389,7 +392,15 @@ void neo_slowp_start(bool clear)  {
   slowp_g = neo_sequences[seq_index].point[0].green;
   slowp_b = neo_sequences[seq_index].point[0].blue;
 
+  /*
+   * obtain the random places where the lights will flicker
+   */
+  randomSeed(analogRead(0));  // different each time through
+  for(uint8_t j = 0; j < SLOWP_FLICKERS; j++)
+    slowp_flickers[j] = random(0, NEO_SLOWP_POINTS);
+
   TRACE("Starting slowp: dr = %f, dg = %f, db = %f dt = %d\n", delta_r, delta_g, delta_b, delta_time);
+  TRACE("Randoms are:");
 
   pixels->clear();
   pixels->show();
@@ -452,8 +463,14 @@ void neo_slowp_write(void) {
   /*
    * send the next point in the sequence to the strand
    */
-  for(int i=0; i < pixels->numPixels(); i++) // For each pixel...
-    pixels->setPixelColor(i, pixels->Color( (uint8_t)slowp_r, (uint8_t)slowp_g, (uint8_t)slowp_b));
+  for(int i=0; i < pixels->numPixels(); i++) {    // For each pixel...
+    if(slowp_idx == slowp_flickers[slowp_flicker_idx])  {
+      if(++slowp_flicker_idx > SLOWP_FLICKERS)  slowp_flicker_idx = 0;
+      pixels->setPixelColor(i, pixels->Color((uint8_t)255, (uint8_t)255, (uint8_t)255));
+    }
+    else
+      pixels->setPixelColor(i, pixels->Color((uint8_t)slowp_r, (uint8_t)slowp_g, (uint8_t)slowp_b));
+  }
 
   pixels->show();   // Send the updated pixel colors to the hardware.
 
