@@ -401,6 +401,9 @@ void neo_slowp_start(bool clear)  {
 
   TRACE("Starting slowp: dr = %f, dg = %f, db = %f dt = %d\n", delta_r, delta_g, delta_b, delta_time);
   TRACE("Randoms are:");
+  for(uint8_t j = 0; j < SLOWP_FLICKERS; j++)
+    TRACE("%d  ", slowp_flickers[j]);
+  TRACE("\n");
 
   pixels->clear();
   pixels->show();
@@ -413,6 +416,7 @@ void neo_slowp_start(bool clear)  {
 
 
 void neo_slowp_write(void) {
+  uint8_t r, g, b;
 
   /*
    * currently going up
@@ -463,14 +467,16 @@ void neo_slowp_write(void) {
   /*
    * send the next point in the sequence to the strand
    */
-  for(int i=0; i < pixels->numPixels(); i++) {    // For each pixel...
-    if(slowp_idx == slowp_flickers[slowp_flicker_idx])  {
-      if(++slowp_flicker_idx > SLOWP_FLICKERS)  slowp_flicker_idx = 0;
-      pixels->setPixelColor(i, pixels->Color((uint8_t)255, (uint8_t)255, (uint8_t)255));
-    }
-    else
-      pixels->setPixelColor(i, pixels->Color((uint8_t)slowp_r, (uint8_t)slowp_g, (uint8_t)slowp_b));
+  if(slowp_idx == slowp_flickers[slowp_flicker_idx])  {
+    r = g = b = 255;
+    if(++slowp_flicker_idx > SLOWP_FLICKERS)  slowp_flicker_idx = 0;
   }
+  else  {
+    r = slowp_r; g = slowp_g, b = slowp_b;
+  }
+
+  for(int i=0; i < pixels->numPixels(); i++)  // For each pixel...
+      pixels->setPixelColor(i, pixels->Color(r, g, b));
 
   pixels->show();   // Send the updated pixel colors to the hardware.
 
