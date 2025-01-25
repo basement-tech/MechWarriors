@@ -274,6 +274,9 @@ void start_noop(bool clear) {}
 
 /*
  * SEQ_STRAT_POINTS
+ * each line in the json is a single point in the sequence.
+ * the "t" times are mS between points
+ * the sequence restarts at the end and runs continuously
  */
 void neo_points_start(bool clear) {
   neo_write_pixel(true);  // clear the strand and write the first value
@@ -316,6 +319,9 @@ void neo_points_stopping(void)  {
 
 /*
  * SEQ_STRAT_SINGLE
+ * each line in the json is a single point in the sequence.
+ * the "t" times are mS between points
+ * the sequence runs once per button press and stops
  */
 
 void neo_single_write(void) {
@@ -330,6 +336,41 @@ void neo_single_write(void) {
 }
 
 // end of SEQ_STRAT_SINGLE callbacks
+
+/*
+ * SEQ_STRAT_SLOWP
+ * this is a slowly moving pulse sequence
+ * only a single point is expected in the json, from which
+ * the endpoint/maximum (color and intensity) of the pulse is taken
+ * "t" is interpreted a the total number of seconds for the wave
+ * this is a calculated sequence (based on NEO_SLOWP_POINTS):
+ * - the interval between changes is based on the "t" seconds parameter
+ * - the delta change is calculated
+ */
+#ifdef NOTYET
+void neo_slowp_start(bool clear)  {
+  float delta_r, delta_g, delta_b;  // calculated increment for each color
+  uint32_t delta_time;  // calculated time between changes
+
+  /*
+   * calculate delta time in mS based on the first (and only)
+   * line in the json sequence file
+   */
+  delta_time = (neo_sequences[seq_index].point[0].ms_after_last * 1000) / NEO_SLOWP_POINTS;
+
+  /*
+   * calculate the delta chance for each color
+   * the first line in the json sequence has the max/endpoint
+   * of the sequence
+   *
+   */
+  delta_r = neo_sequences[seq_index].point[0].red / NEO_SLOWP_POINTS;
+  delta_g = neo_sequences[seq_index].point[0].green / NEO_SLOWP_POINTS;
+  delta_b = neo_sequences[seq_index].point[0].blue / NEO_SLOWP_POINTS;
+
+}
+#endif
+// end of SEQ_STRAT_SLOWP callbacks
 
 /*
  * function calls by strategy for each state in the playback machine

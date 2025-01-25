@@ -8,9 +8,10 @@
 #include <Adafruit_NeoPixel.h>
 
 #define NEO_SEQ_STRATEGIES 5
-#define MAX_USER_SEQ  5  // maximum number of user buttons/files
-#define MAX_SEQUENCES 8  // number of sequences to allocate
-#define MAX_NUM_SEQ_POINTS 256   // maximum number of points per sequence
+#define MAX_USER_SEQ       5      // maximum number of user buttons/files
+#define MAX_SEQUENCES      8      // number of sequences to allocate
+#define MAX_NUM_SEQ_POINTS 256    // maximum number of points per sequence
+#define NEO_SLOWP_POINTS   1024   // number of points (smoothness) in SLOWP sequence
 
 /*
  * return error codes for reading a user sequence file
@@ -39,7 +40,7 @@ typedef struct {
   uint8_t green;
   uint8_t blue;
   uint8_t white;  // not always used
-  int32_t ms_after_last;  // wait this many uS after last change to play
+  int32_t ms_after_last;  // wait this many mS after last change to play
 } neo_seq_point_t;
 
 typedef struct  {
@@ -57,6 +58,7 @@ typedef enum {
   SEQ_STRAT_CHASE,    // attributes of a chase sequence are specified
   SEQ_STRAT_PONG,     // attributes of single moving pixel are specified
   SEQ_STRAT_RAINBOW,  // attributes of a dynamic rainbow pattern are specified
+  SEQ_STRAT_SLOWP,    // slow pulse - calculated sequence
   SEQ_STRAT_UNDEFINED
 }  seq_strategy_t;
 

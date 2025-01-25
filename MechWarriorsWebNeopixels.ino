@@ -98,9 +98,10 @@
  *
  * TODO:
  * o figure out how the DELETE works and implement it
- * o single shot sequences using strategy attribute
+ * x single shot sequences using strategy attribute
  * o more built in sequences
- * o different strategies for interpretting json sequence files and playout them out
+ * o more different strategies for interpretting json sequence files and playout them out
+ * o chase, pong, rainbow, slowfade (color, intensity range, speed)
  * o how to set debug levels and clean up use of TRACE()
  * o how can I publicise the ip address when using DHCP
  * o add eeprom parm for enable/disable DHCP
@@ -109,6 +110,8 @@
  * o download and install esp8266 littleFS plugin and reduce size of filesystem
  * o should a timer be added to drive frequency of neopixel strand updates (1mS ?) ?
  * o look at how the number of USER sequences can be dynamically done (malloc-ish)
+ *   or write to a single "USER" space in the sequence array and use another means
+ *   to determine if the sequence has changed on button press.
  * 
  *
  * (c) Daniel J. Zimmerman  Jan 2025
