@@ -347,10 +347,16 @@ void neo_single_write(void) {
  * - the interval between changes is based on the "t" seconds parameter
  * - the delta change is calculated
  */
-#ifdef NOTYET
+static int32_t slowp_idx = 0;  // counting through the NEO_SLOWP_POINTS
+static int8_t slowp_dir = 1;  // +1 -1 to indicate the direction we're traveling
+static uint32_t delta_time;  // calculated time between changes
+static float delta_r, delta_g, delta_b;  // calculated increment for each color ... must be floats or gets rounded to 0 between calls
+static float slowp_r, slowp_g, slowp_b;  // remember where we are in the sequence
+
 void neo_slowp_start(bool clear)  {
-  float delta_r, delta_g, delta_b;  // calculated increment for each color
-  uint32_t delta_time;  // calculated time between changes
+
+  slowp_idx = 0;
+  slowp_dir = 1;  // start by going up
 
   /*
    * calculate delta time in mS based on the first (and only)
@@ -364,12 +370,89 @@ void neo_slowp_start(bool clear)  {
    * of the sequence
    *
    */
-  delta_r = neo_sequences[seq_index].point[0].red / NEO_SLOWP_POINTS;
-  delta_g = neo_sequences[seq_index].point[0].green / NEO_SLOWP_POINTS;
-  delta_b = neo_sequences[seq_index].point[0].blue / NEO_SLOWP_POINTS;
+  delta_r = neo_sequences[seq_index].point[0].red / (float)NEO_SLOWP_POINTS;  // cast needed to force floating point math
+  delta_g = neo_sequences[seq_index].point[0].green / (float)NEO_SLOWP_POINTS;
+  delta_b = neo_sequences[seq_index].point[0].blue / (float)NEO_SLOWP_POINTS;
+  slowp_r = 0; slowp_g = 0; slowp_b = 0;
+
+  TRACE("Starting slowp: dr = %f, dg = %f, db = %f dt = %d\n", delta_r, delta_g, delta_b, delta_time);
+
+  pixels->clear();
+  pixels->show();
+
+  current_millis = millis();
+
+  neo_state = NEO_SEQ_WAIT;
 
 }
+
+
+void neo_slowp_write(void) {
+
+  /*
+   * currently going up
+   */
+  if(slowp_dir > 0)  {
+    if(slowp_idx < NEO_SLOWP_POINTS)  {  // have not reached the top of the sequence
+      if((slowp_r += delta_r) > 255) slowp_r = 255;  // could be by rounding error
+      if((slowp_g += delta_g) > 255) slowp_g = 255;
+      if((slowp_b += delta_b) > 255) slowp_b = 255;
+      slowp_idx++;
+    }
+    else  {
+      slowp_dir = -1;  // change to going down
+      slowp_idx--;
+    }
+  }
+
+  /*
+   * currently going down
+   */
+  else  {
+    if(slowp_idx > 0)  {  // list terminator: nothing to write
+      if((slowp_r -= delta_r) < 0) slowp_r = 0;
+      if((slowp_g -= delta_g) < 0) slowp_g = 0;
+      if((slowp_b -= delta_b) < 0) slowp_b = 0;
+      slowp_idx--;
+    }
+    else  {
+      slowp_dir = 1;  // change to going down
+      slowp_idx++;
+    }
+  }
+
+  /*
+   * send the next point in the sequence to the strand
+   */
+  for(int i=0; i < pixels->numPixels(); i++) // For each pixel...
+    pixels->setPixelColor(i, pixels->Color( (uint8_t)slowp_r, (uint8_t)slowp_g, (uint8_t)slowp_b));
+
+  pixels->show();   // Send the updated pixel colors to the hardware.
+
+#ifdef DEBUG_HACK
+  TRACE("neo_slowp_write: Showed %d  %d  %d\n", slowp_r, slowp_g, slowp_b);
+  while(Serial.available() == 0);
+  Serial.read();
 #endif
+
+  neo_state = NEO_SEQ_WAIT;
+}
+
+
+void neo_slowp_wait(void)  {
+  uint64_t new_millis = 0;
+
+  /*
+    * if the timer has expired (or assumed that if current_millis == 0, then it will be)
+    * i.e. done waiting move to the next state
+    */
+  if(((new_millis = millis()) - current_millis) >= delta_time)  {
+    current_millis = new_millis;
+    neo_state = NEO_SEQ_WRITE;
+  }
+
+}
+
 // end of SEQ_STRAT_SLOWP callbacks
 
 /*
@@ -380,9 +463,10 @@ seq_callbacks_t seq_callbacks[NEO_SEQ_STRATEGIES] = {
 //  strategy              label                start                wait              write                stopping             stopped
   { SEQ_STRAT_POINTS,    "points",         neo_points_start,  neo_points_wait,   neo_points_write,    neo_points_stopping,      noop},
   { SEQ_STRAT_SINGLE,    "single",         neo_points_start,  neo_points_wait,   neo_single_write,    neo_points_stopping,      noop},
-  { SEQ_STRAT_CHASE,     "xchase",          start_noop,           noop,   noop,    noop,       noop},
-  { SEQ_STRAT_PONG,      "xpong",           start_noop,           noop,   noop,    noop,       noop},
-  { SEQ_STRAT_RAINBOW,   "xrainbow",        start_noop,           noop,   noop,    noop,       noop},
+  { SEQ_STRAT_CHASE,     "xchase",          start_noop,           noop,               noop,                 noop,               noop},
+  { SEQ_STRAT_PONG,      "xpong",           start_noop,           noop,               noop,                 noop,               noop},
+  { SEQ_STRAT_RAINBOW,   "xrainbow",        start_noop,           noop,               noop,                 noop,               noop},
+  { SEQ_STRAT_SLOWP,     "slowp",          neo_slowp_start,   neo_slowp_wait,    neo_slowp_write,     neo_points_stopping,      noop},
 };
 
 /*

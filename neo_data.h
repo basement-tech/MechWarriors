@@ -7,7 +7,7 @@
 #include <c_types.h>
 #include <Adafruit_NeoPixel.h>
 
-#define NEO_SEQ_STRATEGIES 5
+#define NEO_SEQ_STRATEGIES 6
 #define MAX_USER_SEQ       5      // maximum number of user buttons/files
 #define MAX_SEQUENCES      8      // number of sequences to allocate
 #define MAX_NUM_SEQ_POINTS 256    // maximum number of points per sequence
