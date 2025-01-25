@@ -85,7 +85,7 @@ int8_t neo_set_sequence(const char *label, const char *strategy)  {
    * if sequence setting was successful, attempt to set the strategy
    */
   if(ret == NEO_SUCCESS)  {
-    if((new_strat = neo_set_strategy(strategy)) == NEO_STRAT_ERR)
+    if((new_strat = neo_set_strategy(strategy)) == SEQ_STRAT_UNDEFINED)
       ret = NEO_STRAT_ERR;
   }
 
@@ -333,14 +333,15 @@ void neo_single_write(void) {
 
 /*
  * function calls by strategy for each state in the playback machine
+ * TODO: delete the 'x' before the labels after implementing a strategy
  */
 seq_callbacks_t seq_callbacks[NEO_SEQ_STRATEGIES] = {
 //  strategy              label                start                wait              write                stopping             stopped
   { SEQ_STRAT_POINTS,    "points",         neo_points_start,  neo_points_wait,   neo_points_write,    neo_points_stopping,      noop},
   { SEQ_STRAT_SINGLE,    "single",         neo_points_start,  neo_points_wait,   neo_single_write,    neo_points_stopping,      noop},
-  { SEQ_STRAT_CHASE,     "chase",          start_noop,           noop,   noop,    noop,       noop},
-  { SEQ_STRAT_PONG,      "pong",           start_noop,           noop,   noop,    noop,       noop},
-  { SEQ_STRAT_RAINBOW,   "rainbow",        start_noop,           noop,   noop,    noop,       noop},
+  { SEQ_STRAT_CHASE,     "xchase",          start_noop,           noop,   noop,    noop,       noop},
+  { SEQ_STRAT_PONG,      "xpong",           start_noop,           noop,   noop,    noop,       noop},
+  { SEQ_STRAT_RAINBOW,   "xrainbow",        start_noop,           noop,   noop,    noop,       noop},
 };
 
 /*

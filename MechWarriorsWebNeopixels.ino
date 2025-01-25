@@ -294,15 +294,18 @@ void handleButton()  {
          * if so, load the file and set the sequence and strategy
          */
         else if((neo_is_user(seq)) == NEO_SUCCESS)  {
-          neoerr = neo_load_sequence(jsonDoc["file"]);
+          if((neoerr = neo_load_sequence(jsonDoc["file"])) != NEO_SUCCESS)
+            TRACE("Error loading sequence file after proper detection\n");
         }
 
         /*
          * if not STOP or USER-x, then attempt to set the sequence,
          * assuming that it's a pre-defined button
          */
-        else if((neoerr = neo_set_sequence(seq, "points")) != NEO_SUCCESS)
-          TRACE("Error setting sequence after proper detection\n");
+        else  {
+          if((neoerr = neo_set_sequence(seq, "points")) != NEO_SUCCESS)
+            TRACE("Error setting sequence after proper detection\n");
+        }
       }
       else  {
         neoerr = NEO_NOPLACE;
