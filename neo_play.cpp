@@ -340,9 +340,10 @@ void neo_single_write(void) {
 /*
  * SEQ_STRAT_SLOWP
  * this is a slowly moving pulse sequence
- * only a single point is expected in the json, from which
- * the endpoint/maximum (color and intensity) of the pulse is taken
- * "t" is interpreted a the total number of seconds for the wave
+ * only a two points are expected in the json, from which
+ * the endpoint/maximum (color and intensity)  and the starting intensity
+ * of the pulse is taken
+ * "t" from the first line is interpreted a the total number of seconds for the wave
  * this is a calculated sequence (based on NEO_SLOWP_POINTS):
  * - the interval between changes is based on the "t" seconds parameter
  * - the delta change is calculated
@@ -370,10 +371,23 @@ void neo_slowp_start(bool clear)  {
    * of the sequence
    *
    */
-  delta_r = neo_sequences[seq_index].point[0].red / (float)NEO_SLOWP_POINTS;  // cast needed to force floating point math
-  delta_g = neo_sequences[seq_index].point[0].green / (float)NEO_SLOWP_POINTS;
-  delta_b = neo_sequences[seq_index].point[0].blue / (float)NEO_SLOWP_POINTS;
-  slowp_r = 0; slowp_g = 0; slowp_b = 0;
+  delta_r = (neo_sequences[seq_index].point[1].red - neo_sequences[seq_index].point[0].red) / (float)NEO_SLOWP_POINTS;  // cast needed to force floating point math
+  delta_g = (neo_sequences[seq_index].point[1].green - neo_sequences[seq_index].point[0].green) / (float)NEO_SLOWP_POINTS;
+  delta_b = (neo_sequences[seq_index].point[1].blue - neo_sequences[seq_index].point[0].blue) / (float)NEO_SLOWP_POINTS;
+
+  /*
+   * test for bad input and cause no intensity if bad
+   */
+  if(delta_r < 0)  delta_r = 0;
+  if(delta_g < 0)  delta_g = 0;
+  if(delta_b < 0)  delta_b = 0;
+
+  /*
+   * start from the json specified starting point
+   */
+  slowp_r = neo_sequences[seq_index].point[0].red;
+  slowp_g = neo_sequences[seq_index].point[0].green;
+  slowp_b = neo_sequences[seq_index].point[0].blue;
 
   TRACE("Starting slowp: dr = %f, dg = %f, db = %f dt = %d\n", delta_r, delta_g, delta_b, delta_time);
 
@@ -402,6 +416,13 @@ void neo_slowp_write(void) {
     else  {
       slowp_dir = -1;  // change to going down
       slowp_idx--;
+
+      /*
+       * reset to the ending point in case of rounding error
+       */
+      slowp_r = neo_sequences[seq_index].point[1].red;
+      slowp_g = neo_sequences[seq_index].point[1].green;
+      slowp_b = neo_sequences[seq_index].point[1].blue;
     }
   }
 
@@ -418,6 +439,13 @@ void neo_slowp_write(void) {
     else  {
       slowp_dir = 1;  // change to going down
       slowp_idx++;
+
+      /*
+       * reset to the starting point  in case of rounding error
+       */
+      slowp_r = neo_sequences[seq_index].point[0].red;
+      slowp_g = neo_sequences[seq_index].point[0].green;
+      slowp_b = neo_sequences[seq_index].point[0].blue;
     }
   }
 
