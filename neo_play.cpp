@@ -69,6 +69,8 @@ int8_t seq_index = -1;  // global used to hold the index of the currently runnin
 int8_t neo_set_sequence(const char *label, const char *strategy)  {
   int8_t ret = NEO_SEQ_ERR;
   int8_t new_index = 0;
+  seq_strategy_t new_strat;
+
 
   /*
    * attempt to set the sequence
@@ -83,16 +85,18 @@ int8_t neo_set_sequence(const char *label, const char *strategy)  {
    * if sequence setting was successful, attempt to set the strategy
    */
   if(ret == NEO_SUCCESS)  {
-    if(neo_set_strategy(strategy) == NEO_STRAT_ERR)
+    if((new_strat = neo_set_strategy(strategy)) == NEO_STRAT_ERR)
       ret = NEO_STRAT_ERR;
   }
 
   /*
-   * if all above was successful, start the sequence
+   * if all above was successful, set up the globals and start the sequence
    */
   if(ret == NEO_SUCCESS)  {
     current_index = 0;  // reset the pixel count
     neo_state = NEO_SEQ_START;  // cause the state machine to start at the start
+    current_strategy = new_strat;
+    TRACE("neo_set_sequence: set sequence to %d and strategy to %d\n", seq_index, current_strategy);
   }
 
   return(ret);
@@ -273,6 +277,7 @@ void start_noop(bool clear) {}
  */
 void neo_points_start(bool clear) {
   neo_write_pixel(true);  // clear the strand and write the first value
+  current_millis = millis();
   neo_state = NEO_SEQ_WAIT;
 }
 
@@ -302,6 +307,7 @@ void neo_points_stopping(void)  {
   pixels->clear(); // Set all pixel colors to 'off'
   pixels->show();   // Send the updated pixel colors to the hardware.
   current_index = 0;
+  seq_index = -1; // so it doesn't match
 
   neo_state = NEO_SEQ_STOPPED;
 }
@@ -313,8 +319,14 @@ void neo_points_stopping(void)  {
  */
 
 void neo_single_write(void) {
-  if(neo_sequences[seq_index].point[current_index].ms_after_last < 0)  // list terminator: nothing to write
+  if(neo_sequences[seq_index].point[current_index].ms_after_last < 0)  {  // list terminator: nothing to write
+    current_index = 0;
     neo_state = NEO_SEQ_STOPPING;
+  }
+  else  {
+    neo_write_pixel(false);
+    neo_state = NEO_SEQ_WAIT;
+  }
 }
 
 // end of SEQ_STRAT_SINGLE callbacks
