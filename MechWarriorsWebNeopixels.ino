@@ -282,6 +282,7 @@ void handleButton()  {
        */
       if(seq != NULL)  {
         TRACE("Setting sequence to %s\n", seq);
+
         /*
          * was it the stop button
          */
@@ -290,7 +291,7 @@ void handleButton()  {
 
         /*
          * if not STOP, see if it was a USER defined sequence
-         * if so, load the file and set the sequence
+         * if so, load the file and set the sequence and strategy
          */
         else if((neo_is_user(seq)) == NEO_SUCCESS)  {
           neoerr = neo_load_sequence(jsonDoc["file"]);
@@ -300,7 +301,7 @@ void handleButton()  {
          * if not STOP or USER-x, then attempt to set the sequence,
          * assuming that it's a pre-defined button
          */
-        else if((neoerr = neo_set_sequence(seq)) != NEO_SUCCESS)
+        else if((neoerr = neo_set_sequence(seq, "points")) != NEO_SUCCESS)
           TRACE("Error setting sequence after proper detection\n");
       }
       else  {

@@ -66,17 +66,35 @@ int8_t neo_find_sequence(const char *label)  {
  * is different than the currently running index.
  */
 int8_t seq_index = -1;  // global used to hold the index of the currently running sequence
-int8_t neo_set_sequence(const char *label)  {
+int8_t neo_set_sequence(const char *label, const char *strategy)  {
   int8_t ret = NEO_SEQ_ERR;
   int8_t new_index = 0;
 
+  /*
+   * attempt to set the sequence
+   */
   new_index = neo_find_sequence(label);
   if((new_index >= 0) && (new_index != seq_index))  {
     seq_index = new_index;  // set the sequence index that is to be played
     ret = NEO_SUCCESS; // success
+  }
+
+  /*
+   * if sequence setting was successful, attempt to set the strategy
+   */
+  if(ret == NEO_SUCCESS)  {
+    if(neo_set_strategy(strategy) == NEO_STRAT_ERR)
+      ret = NEO_STRAT_ERR;
+  }
+
+  /*
+   * if all above was successful, start the sequence
+   */
+  if(ret == NEO_SUCCESS)  {
     current_index = 0;  // reset the pixel count
     neo_state = NEO_SEQ_START;  // cause the state machine to start at the start
   }
+
   return(ret);
 }
 
@@ -203,7 +221,7 @@ int8_t neo_load_sequence(const char *file)  {
             neo_sequences[seq_idx].point[i].ms_after_last = t;
             i++;
           }
-          neo_set_sequence(label);
+          ret = neo_set_sequence(label, jsonDoc["strategy"]);
         }
       }
     }
@@ -232,19 +250,6 @@ void neo_write_pixel(bool clear)  {
 
 
 /*
- * mapping of the functions called for each state in the playback machine
- * to the strategy being used to play it.
- */
-typedef struct {
-  seq_strategy_t strategy;
-  void (*start)(bool clear);
-  void (*wait)(void);
-  void (*write)(void);
-  void (*stopping)(void);
-  void (*stopped)(void);
-} seq_callbacks_t;
-
-/*
  * initialize the neopixel strand and set it to off/idle
  */
 void neo_init(uint16_t numPixels, int16_t pin, neoPixelType pixelFormat)  {
@@ -261,6 +266,7 @@ void neo_init(uint16_t numPixels, int16_t pin, neoPixelType pixelFormat)  {
  */
 void noop(void) {}
 void start_noop(bool clear) {}
+
 
 /*
  * SEQ_STRAT_POINTS
@@ -308,8 +314,7 @@ void neo_points_stopping(void)  {
 
 void neo_single_write(void) {
   if(neo_sequences[seq_index].point[current_index].ms_after_last < 0)  // list terminator: nothing to write
-    current_index = 0;
-  neo_write_pixel(false);
+    neo_state = NEO_SEQ_STOPPING;
 }
 
 // end of SEQ_STRAT_SINGLE callbacks
@@ -318,12 +323,29 @@ void neo_single_write(void) {
  * function calls by strategy for each state in the playback machine
  */
 seq_callbacks_t seq_callbacks[NEO_SEQ_STRATEGIES] = {
-//  strategy          start                   wait              write                stopping             stopped
-  { SEQ_STRAT_POINTS, neo_points_start,  neo_points_wait,   neo_points_write,    neo_points_stopping,      noop},
-  { SEQ_STRAT_SINGLE, start_noop,           noop,   noop,    noop,       noop},
-  { SEQ_STRAT_CHASE,  start_noop,           noop,   noop,    noop,       noop},
-  { SEQ_STRAT_PONG,   start_noop,           noop,   noop,    noop,       noop},
+//  strategy              label                start                wait              write                stopping             stopped
+  { SEQ_STRAT_POINTS,    "points",         neo_points_start,  neo_points_wait,   neo_points_write,    neo_points_stopping,      noop},
+  { SEQ_STRAT_SINGLE,    "single",         neo_points_start,  neo_points_wait,   neo_single_write,    neo_points_stopping,      noop},
+  { SEQ_STRAT_CHASE,     "chase",          start_noop,           noop,   noop,    noop,       noop},
+  { SEQ_STRAT_PONG,      "pong",           start_noop,           noop,   noop,    noop,       noop},
+  { SEQ_STRAT_RAINBOW,   "rainbow",        start_noop,           noop,   noop,    noop,       noop},
 };
+
+/*
+ * expose a method to set the strategy from the "main"
+ * look through the labels for a match with the argument
+ * and set the global 
+ */
+seq_strategy_t neo_set_strategy(const char *sstrategy)  {
+  seq_strategy_t ret = SEQ_STRAT_UNDEFINED;
+
+  for(int8_t i=0; i < NEO_SEQ_STRATEGIES; i++)  {
+    if(strcmp(sstrategy, seq_callbacks[i].label) == 0)  {
+      ret = seq_callbacks[i].strategy;
+    }
+  }
+  return(ret);
+}
 
 /*
  * check if the specified time since last change has occured

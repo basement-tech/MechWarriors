@@ -7,7 +7,7 @@
 #include <c_types.h>
 #include <Adafruit_NeoPixel.h>
 
-#define NEO_SEQ_STRATEGIES 8
+#define NEO_SEQ_STRATEGIES 5
 #define MAX_USER_SEQ  5  // maximum number of user buttons/files
 #define MAX_SEQUENCES 8  // number of sequences to allocate
 #define MAX_NUM_SEQ_POINTS 256   // maximum number of points per sequence
@@ -24,10 +24,11 @@
 #define   NEO_DESERR             -1
 #define   NEO_NOPLACE            -2
 #define   NEO_SEQ_ERR            -3
-#define   NEO_FILE_LOAD_NOTUSER  -4
-#define   NEO_FILE_LOAD_NOFILE   -5
-#define   NEO_FILE_LOAD_DESERR   -6
-#define   NEO_FILE_LOAD_NOPLACE  -7
+#define   NEO_STRAT_ERR          -4
+#define   NEO_FILE_LOAD_NOTUSER  -5
+#define   NEO_FILE_LOAD_NOFILE   -6
+#define   NEO_FILE_LOAD_DESERR   -7
+#define   NEO_FILE_LOAD_NOPLACE  -8
 #define   NEO_FILE_LOAD_OTHER    -9
 
 /*
@@ -51,13 +52,28 @@ typedef struct  {
  * an played out
  */
 typedef enum {
-  SEQ_STRAT_POINTS,  // each point in the sequence is specified
-  SEQ_STRAT_SINGLE,  // single shot : play the sequence once and STOP
-  SEQ_STRAT_CHASE,   // attributes of a chase sequence are specified
-  SEQ_STRAT_PONG,    // attributes of single moving pixel are specified
-  SEQ_STRAT_RAINBOW  // attributes of a dynamic rainbow pattern are specified
+  SEQ_STRAT_POINTS,   // each point in the sequence is specified
+  SEQ_STRAT_SINGLE,   // single shot : play the sequence once and STOP
+  SEQ_STRAT_CHASE,    // attributes of a chase sequence are specified
+  SEQ_STRAT_PONG,     // attributes of single moving pixel are specified
+  SEQ_STRAT_RAINBOW,  // attributes of a dynamic rainbow pattern are specified
+  SEQ_STRAT_UNDEFINED
 }  seq_strategy_t;
 
+
+/*
+ * mapping of the functions called for each state in the playback machine
+ * to the strategy being used to play it.
+ */
+typedef struct {
+  seq_strategy_t strategy;
+  const char *label;
+  void (*start)(bool clear);
+  void (*wait)(void);
+  void (*write)(void);
+  void (*stopping)(void);
+  void (*stopped)(void);
+} seq_callbacks_t;
 
 /*
  * describes the hardware configuration of the neopixel strip
@@ -72,8 +88,9 @@ typedef enum {
 void neo_cycle_next(void);
 void neo_init(uint16_t numPixels, int16_t pin, neoPixelType pixelFormat);
 int8_t neo_is_user(const char *label);
-int8_t neo_load_sequence(const char *label);
-int8_t neo_set_sequence(const char *label);
+int8_t neo_load_sequence(const char *file);
+int8_t neo_set_sequence(const char *label, const char *strategy);
+seq_strategy_t neo_set_strategy(const char *sstrategy);
 void neo_cycle_stop(void);
 
 /*
