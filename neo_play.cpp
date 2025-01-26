@@ -357,14 +357,20 @@ static int8_t slowp_dir = 1;  // +1 -1 to indicate the direction we're traveling
 static uint32_t delta_time;  // calculated time between changes
 static float delta_r, delta_g, delta_b;  // calculated increment for each color ... must be floats or gets rounded to 0 between calls
 static float slowp_r, slowp_g, slowp_b;  // remember where we are in the sequence
-#define SLOWP_FLICKERS 5
+#define SLOWP_FLICKERS 10
 int16_t slowp_flickers[SLOWP_FLICKERS];  // random points to flicker
 uint8_t slowp_flicker_idx = 0;
+int8_t flicker_dir = 0;  // flicker bright or dark
+int8_t flicker_count = 0;  // how many flickers
 
 void neo_slowp_start(bool clear)  {
 
   slowp_idx = 0;
   slowp_dir = 1;  // start by going up
+  slowp_flicker_idx = 0;  // start at the start
+  flicker_count = 0;  // assume none to Start
+
+
 
   /*
    * calculate delta time in mS based on the first (and only)
@@ -398,14 +404,31 @@ void neo_slowp_start(bool clear)  {
 
   /*
    * obtain the random places where the lights will flicker
+   * based on the "bonus" parameter from the json sequence file
    */
+  if(strlen(neo_sequences[seq_index].bonus) > 0)  {
+    flicker_count = atoi(neo_sequences[seq_index].bonus);
+    if(abs(flicker_count) > SLOWP_FLICKERS) flicker_count = SLOWP_FLICKERS;  //boundary check
+
+    /*
+     * set the direction that the flicker brightness will take
+     */
+    if     (flicker_count > 0)  flicker_dir = 1;
+    else if(flicker_count < 0)  flicker_dir = -1;
+    else                        flicker_dir = 0;
+
+    /*
+     * we'll use flicker_count and flicker_dir separately from here
+     */
+    flicker_count = abs(flicker_count);
+  }
   randomSeed(analogRead(0));  // different each time through
-  for(uint8_t j = 0; j < SLOWP_FLICKERS; j++)
+  for(uint8_t j = 0; j < flicker_count; j++)
     slowp_flickers[j] = random(0, NEO_SLOWP_POINTS);
 
   TRACE("Starting slowp: dr = %f, dg = %f, db = %f dt = %d\n", delta_r, delta_g, delta_b, delta_time);
   TRACE("Randoms are:");
-  for(uint8_t j = 0; j < SLOWP_FLICKERS; j++)
+  for(uint8_t j = 0; j < flicker_count; j++)
     TRACE("%d  ", slowp_flickers[j]);
   TRACE("\n");
 
@@ -471,14 +494,21 @@ void neo_slowp_write(void) {
   /*
    * send the next point in the sequence to the strand
    */
-  if(slowp_idx == slowp_flickers[slowp_flicker_idx])  {
-    r = g = b = 255;
-    if(++slowp_flicker_idx > SLOWP_FLICKERS)  slowp_flicker_idx = 0;
+  if(flicker_count == 0)  {
+          r = slowp_r; g = slowp_g, b = slowp_b;
   }
   else  {
-    r = slowp_r; g = slowp_g, b = slowp_b;
+    if(slowp_idx == slowp_flickers[slowp_flicker_idx])  {
+      if(flicker_dir > 0)
+        r = g = b = 255;
+      else
+        r = g = b = 0;
+      if(++slowp_flicker_idx > flicker_count)
+        slowp_flicker_idx = 0;
+    }
+    else
+      r = slowp_r; g = slowp_g, b = slowp_b;
   }
-
   for(int i=0; i < pixels->numPixels(); i++)  // For each pixel...
       pixels->setPixelColor(i, pixels->Color(r, g, b));
 
