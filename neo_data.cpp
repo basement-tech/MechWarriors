@@ -9,6 +9,7 @@
 // adjust MAX_SEQUENCES in neo_data.h to match number initialized
 neo_data_t neo_sequences[MAX_SEQUENCES] = {
   { "RED-MED",
+    {0},
     {
     { 0,   0, 0, 0, 50 },
     { 8,   0, 0, 0, 50 },
@@ -48,6 +49,7 @@ neo_data_t neo_sequences[MAX_SEQUENCES] = {
     }
   }, // red-med
   { "GREEN-MED",
+    {0},
     {
     { 0, 0,   0, 0, 50 },
     { 0, 8,   0, 0, 50 },
@@ -87,6 +89,7 @@ neo_data_t neo_sequences[MAX_SEQUENCES] = {
     }
   }, // green-med
   { "PURPLE-SLOW",
+    {0},
     {
     { 0,   0, 0,   0, 50 },
     { 4,   0, 4,   0, 50 },
@@ -156,26 +159,31 @@ neo_data_t neo_sequences[MAX_SEQUENCES] = {
     }
   }, //purple-slow
   { "USER-1",
+    {0},
     {
       { 0, 0, 0, 0, -1 },
     }
   }, // user-1
   { "USER-2",
+    {0},
     {
       { 0, 0, 0, 0, -1 },
     }
   }, // user-2
   { "USER-3",
+    {0},
     {
       { 0, 0, 0, 0, -1 },
     }
   }, // user-3
   { "USER-4",
+    {0},
     {
       { 0, 0, 0, 0, -1 },
     }
   }, // user-4
   { "USER-5",
+    {0},
     {
       { 0, 0, 0, 0, -1 },
     }

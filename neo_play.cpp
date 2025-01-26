@@ -185,9 +185,11 @@ int8_t neo_load_sequence(const char *file)  {
       */
       else  {
         JsonArray points = jsonDoc["points"].as<JsonArray>();
-        const char *label;
+        const char *label, *bonus;
         label = jsonDoc["label"];
+        bonus = jsonDoc["bonus"];
         TRACE("For sequence \"%s\" : \n", label);
+        TRACE("   \"bonus\": %s\n", bonus);
         int8_t seq_idx = neo_find_sequence(label);
 
         /*
@@ -208,6 +210,8 @@ int8_t neo_load_sequence(const char *file)  {
         * TODO: super-verbose for now for debugging
         */
         else  {
+          strncpy(neo_sequences[seq_idx].bonus, bonus, strlen(bonus));
+
           uint16_t i = 0;
           for(JsonObject obj : points)  {
             uint8_t r, g, b, w;
