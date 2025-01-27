@@ -25,6 +25,10 @@ label {
   background-color: purple;
 }
 
+#rainbow {
+  background-color: rgb(236, 103, 196);
+}
+
 #stop {
   background-color: rgb(248, 244, 7);
 }

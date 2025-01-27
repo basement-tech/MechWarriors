@@ -9,9 +9,10 @@
 
 #define NEO_SEQ_STRATEGIES 6
 #define MAX_USER_SEQ       5      // maximum number of user buttons/files
-#define MAX_SEQUENCES      8      // number of sequences to allocate
+#define MAX_SEQUENCES      9      // number of sequences to allocate
 #define MAX_NUM_SEQ_POINTS 256    // maximum number of points per sequence
 #define MAX_NEO_BONUS      16     // max chars  in strategy bonus
+#define MAX_NEO_STRATEGY   16     // max chars in a strategy string
 #define NEO_SLOWP_POINTS   1024   // number of points (smoothness) in SLOWP sequence
 
 /*
@@ -46,6 +47,7 @@ typedef struct {
 
 typedef struct  {
   const char *label;
+  char strategy[MAX_NEO_STRATEGY];
   char bonus[MAX_NEO_BONUS];
   neo_seq_point_t point[MAX_NUM_SEQ_POINTS];
 } neo_data_t;

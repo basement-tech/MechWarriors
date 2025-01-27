@@ -303,10 +303,11 @@ void handleButton()  {
 
         /*
          * if not STOP or USER-x, then attempt to set the sequence,
-         * assuming that it's a pre-defined button
+         * assuming that it's a pre-defined button.
+         * strategies are hardcoded for built in sequences.
          */
         else  {
-          if((neoerr = neo_set_sequence(seq, "points")) != NEO_SUCCESS)
+          if((neoerr = neo_set_sequence(seq, "")) != NEO_SUCCESS)
             TRACE("Error setting sequence after proper detection\n");
         }
       }

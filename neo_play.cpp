@@ -83,15 +83,31 @@ int8_t neo_set_sequence(const char *label, const char *strategy)  {
 
   /*
    * if sequence setting was successful, attempt to set the strategy
+   *
+   * allow for the strategy argument to be a null string so,
+   * for example, in the case of a built-in it might remain
+   * the initialized value
    */
-  if(ret == NEO_SUCCESS)  {
-    if((new_strat = neo_set_strategy(strategy)) == SEQ_STRAT_UNDEFINED)
-      ret = NEO_STRAT_ERR;
+  if(strategy[0] == '\0')  {
+    TRACE("neo_set_sequence: using built in strategy %s for seq_index %d\n", neo_sequences[seq_index].strategy,seq_index);
+    if(ret == NEO_SUCCESS)  {
+      if((new_strat = neo_set_strategy(neo_sequences[seq_index].strategy)) == SEQ_STRAT_UNDEFINED)
+        ret = NEO_STRAT_ERR;
+    }
+  }
+  else {
+    /*
+    * if sequence setting was successful, attempt to set the strategy
+    */
+    if(ret == NEO_SUCCESS)  {
+      if((new_strat = neo_set_strategy(strategy)) == SEQ_STRAT_UNDEFINED)
+        ret = NEO_STRAT_ERR;
+    }
   }
 
   /*
-   * if all above was successful, set up the globals and start the sequence
-   */
+  * if all above was successful, set up the globals and start the sequence
+  */
   if(ret == NEO_SUCCESS)  {
     current_index = 0;  // reset the pixel count
     neo_state = NEO_SEQ_START;  // cause the state machine to start at the start
@@ -347,10 +363,16 @@ void neo_single_write(void) {
  * only a two points are expected in the json, from which
  * the endpoint/maximum (color and intensity)  and the starting intensity
  * of the pulse is taken
+ *
  * "t" from the first line is interpreted a the total number of seconds for the wave
  * this is a calculated sequence (based on NEO_SLOWP_POINTS):
  * - the interval between changes is based on the "t" seconds parameter
  * - the delta change is calculated
+ *
+ * "bonus"  from the json sequence file is interpretted as the number
+ * of random flashes that should occur during the sequence.  The sign of
+ * the "bonus" value indicates whether the flash should be 255 (bright),
+ * or 0 (dark).
  */
 static int32_t slowp_idx = 0;  // counting through the NEO_SLOWP_POINTS
 static int8_t slowp_dir = 1;  // +1 -1 to indicate the direction we're traveling
@@ -541,6 +563,67 @@ void neo_slowp_wait(void)  {
 // end of SEQ_STRAT_SLOWP callbacks
 
 /*
+ * SEQ_STRAT_RAINBOW
+ * cycle a rainbow color pallette along the whole strip
+ * (adapted from the Adafruit strandtest example)
+ */
+long firstPixelHue = 0;
+void neo_rainbow_start(bool clear)  {
+  pixels->clear();
+  pixels->show();
+
+  firstPixelHue = 0;
+
+  current_millis = millis();
+
+  neo_state = NEO_SEQ_WRITE;
+
+}
+
+/*
+ * wait a fixed 10mS
+ */
+void neo_rainbow_wait(void)  {
+  uint64_t new_millis = 0;
+
+  /*
+    * if the timer has expired (or assumed that if current_millis == 0, then it will be)
+    * i.e. done waiting move to the next state
+    */
+  if(((new_millis = millis()) - current_millis) >= 10)  {
+    current_millis = new_millis;
+    neo_state = NEO_SEQ_WRITE;
+  }
+}
+
+/*
+ * advance and write a pixel
+ */
+void neo_rainbow_write(void) {
+  pixels->rainbow(firstPixelHue);
+  pixels->show();
+
+  firstPixelHue += 256;
+
+  if(firstPixelHue >= 5*65536)
+    firstPixelHue = 0;
+
+  neo_state = NEO_SEQ_WAIT;
+
+}
+
+void neo_rainbow_stopping(void)  {
+  pixels->clear(); // Set all pixel colors to 'off'
+  pixels->show();   // Send the updated pixel colors to the hardware.
+
+  seq_index = -1; // so it doesn't match
+
+  neo_state = NEO_SEQ_STOPPED;
+}
+
+// end of SEQ_STRAT_RAINBOW callbacks
+
+/*
  * function calls by strategy for each state in the playback machine
  * TODO: delete the 'x' before the labels after implementing a strategy
  */
@@ -550,7 +633,7 @@ seq_callbacks_t seq_callbacks[NEO_SEQ_STRATEGIES] = {
   { SEQ_STRAT_SINGLE,    "single",         neo_points_start,  neo_points_wait,   neo_single_write,    neo_points_stopping,      noop},
   { SEQ_STRAT_CHASE,     "xchase",          start_noop,           noop,               noop,                 noop,               noop},
   { SEQ_STRAT_PONG,      "xpong",           start_noop,           noop,               noop,                 noop,               noop},
-  { SEQ_STRAT_RAINBOW,   "xrainbow",        start_noop,           noop,               noop,                 noop,               noop},
+  { SEQ_STRAT_RAINBOW,   "rainbow",       neo_rainbow_start, neo_rainbow_wait,  neo_rainbow_write,    neo_rainbow_stopping,     noop},
   { SEQ_STRAT_SLOWP,     "slowp",          neo_slowp_start,   neo_slowp_wait,    neo_slowp_write,     neo_points_stopping,      noop},
 };
 
