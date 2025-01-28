@@ -96,17 +96,20 @@
  * the update got faster ?
  *
  *
- * TODO:
+ * TODO (x = done):
  * o figure out how the DELETE works and implement it
  * x single shot sequences using strategy attribute
- * o more built in sequences
- * o more different strategies for interpretting json sequence files and playout them out
- * o chase, pong, rainbow, slowfade (color, intensity range, speed)
+ * x more built in sequences
+ * x more different strategies for interpretting json sequence files and playout them out
+ * o chase, pong, x rainbow, x slowfade (color, intensity range, speed)
  * o how to set debug levels and clean up use of TRACE()
  * o how can I publicise the ip address when using DHCP
- * o add eeprom parm for enable/disable DHCP
- * o how many connections can be made to the server at a time?
- * o Is keep-alive being used ?  After sitting, sometimes takes 10 seconds to respond
+ *   and use http://hostname or http://hostname.local
+ * x add eeprom parm for enable/disable DHCP
+ * x how many connections can be made to the server at a time?
+ *   default is apparently 5
+ * x Is keep-alive being used ?  After sitting, sometimes takes 10 seconds to respond
+ *   see comments near webserver instantiation in this file
  * o download and install esp8266 littleFS plugin and reduce size of filesystem
  * o should a timer be added to drive frequency of neopixel strand updates (1mS ?) ?
  * o look at how the number of USER sequences can be dynamically done (malloc-ish)
@@ -153,8 +156,40 @@
 // get access to the eeprom based configuration structure
 net_config *pmon_config = get_mon_config_ptr();
 
-// need a WebServer for http access on port 80.
+#ifdef CONFIG_SERVER
+/*
+ * part of figuring out why, after sitting a while, the first button press
+ * takes 5-10 seconds to work.  Although, clicking in the address line
+ * of the browser seems to speed it up ???
+ * (the request to the server is always, eventually honored ... hmmm ?)
+ *
+ * was trying to follow this ... not sure it's for this implementation:
+ * https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_http_server.html#_CPPv414httpd_config_t
+ * 
+ * Configure the HTTP server ... this code doesn't compile; for reference only
+ * default max_open_sockets is apparently 4
+ * keep-alive: Defaults to true when the client's HTTP version is 1.1 or above, otherwise it defaults to false.
+ */
+HTTPD_DEFAULT_CONFIG();
+
+httpd_config_t config = { 
+  .max_open_sockets = 5,  //default
+  .server_port = 80;
+  .keep_alive_enable = true;
+  .keep_alive_idle = 5;  //default
+  .keep_alive_interval = 5; // default
+  .keep_alive_count = 3; // default
+};
+// Start the server
+ESP8266WebServer server(config);
+
+#else
+/*
+ * need a WebServer for http access on port 80.
+ */
 ESP8266WebServer server(80);
+
+#endif
 
 // The text of builtin files are in this header file
 #include "builtinfiles.h"
@@ -318,8 +353,11 @@ void handleButton()  {
     }
     if(neoerr != NEO_SUCCESS)
       server.send(404, "text/plain", "handleButton(): Couldn't process button press");
-    else
+    else  {
+      // Set the response header with "Connection: keep-alive" 
+      server.sendHeader("Connection", "keep-alive");
       server.send(201, "text/plain", "handleButton(): success");
+    }
   }
   else
     server.send(405, "text/plain", "handleButton(): Method Not Allowed");
