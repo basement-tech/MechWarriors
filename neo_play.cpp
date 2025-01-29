@@ -297,6 +297,9 @@ void start_noop(bool clear) {}
  * each line in the json is a single point in the sequence.
  * the "t" times are mS between points
  * the sequence restarts at the end and runs continuously
+ *
+ * NOTE: keep neo_points_start() in sync with neo_single_start()
+ * when making changes.
  */
 void neo_points_start(bool clear) {
   neo_write_pixel(true);  // clear the strand and write the first value
@@ -342,14 +345,44 @@ void neo_points_stopping(void)  {
  * each line in the json is a single point in the sequence.
  * the "t" times are mS between points
  * the sequence runs once per button press and stops
+ *
+ * NOTE: keep neo_points_start() in sync with neo_single_start()
+ * when making changes.
  */
+static int8_t single_repeats = 1;
+
+void neo_single_start(bool clear) {
+  neo_write_pixel(true);  // clear the strand and write the first value
+
+  /*
+   * if the number of repeats given in the bonus value
+   * seems to be valid use it to set the number of 
+   * times the sequence is repeated, otherwise just indicate
+   * that the sequence should be played once.
+   */
+  if(strlen(neo_sequences[seq_index].bonus) > 0)
+    single_repeats = atoi(neo_sequences[seq_index].bonus);
+  else
+    single_repeats = 1;
+
+  /*
+   * get the timing started
+   */
+  current_millis = millis();
+  neo_state = NEO_SEQ_WAIT;
+}
 
 void neo_single_write(void) {
-  if(neo_sequences[seq_index].point[current_index].ms_after_last < 0)  {  // list terminator: nothing to write
-    current_index = 0;
-    neo_state = NEO_SEQ_STOPPING;
+  if(neo_sequences[seq_index].point[current_index].ms_after_last < 0)  {  // list terminator
+    current_index = 0;  // rewind in case we're going to play it again
+    if(--single_repeats > 0)  {  // are we going to play it again?
+      neo_state = NEO_SEQ_WAIT;  // yep
+      neo_write_pixel(false);
+    }
+    else
+      neo_state = NEO_SEQ_STOPPING;  // nope
   }
-  else  {
+  else  {  // just write the point and continue
     neo_write_pixel(false);
     neo_state = NEO_SEQ_WAIT;
   }
@@ -380,10 +413,10 @@ static uint32_t delta_time;  // calculated time between changes
 static float delta_r, delta_g, delta_b;  // calculated increment for each color ... must be floats or gets rounded to 0 between calls
 static float slowp_r, slowp_g, slowp_b;  // remember where we are in the sequence
 #define SLOWP_FLICKERS 10
-int16_t slowp_flickers[SLOWP_FLICKERS];  // random points to flicker
-uint8_t slowp_flicker_idx = 0;
-int8_t flicker_dir = 0;  // flicker bright or dark
-int8_t flicker_count = 0;  // how many flickers
+static int16_t slowp_flickers[SLOWP_FLICKERS];  // random points to flicker
+static uint8_t slowp_flicker_idx = 0;
+static int8_t flicker_dir = 0;  // flicker bright or dark
+static int8_t flicker_count = 0;  // how many flickers
 
 void neo_slowp_start(bool clear)  {
 
@@ -630,7 +663,7 @@ void neo_rainbow_stopping(void)  {
 seq_callbacks_t seq_callbacks[NEO_SEQ_STRATEGIES] = {
 //  strategy              label                start                wait              write                stopping             stopped
   { SEQ_STRAT_POINTS,    "points",         neo_points_start,  neo_points_wait,   neo_points_write,    neo_points_stopping,      noop},
-  { SEQ_STRAT_SINGLE,    "single",         neo_points_start,  neo_points_wait,   neo_single_write,    neo_points_stopping,      noop},
+  { SEQ_STRAT_SINGLE,    "single",         neo_single_start,  neo_points_wait,   neo_single_write,    neo_points_stopping,      noop},
   { SEQ_STRAT_CHASE,     "xchase",          start_noop,           noop,               noop,                 noop,               noop},
   { SEQ_STRAT_PONG,      "xpong",           start_noop,           noop,               noop,                 noop,               noop},
   { SEQ_STRAT_RAINBOW,   "rainbow",       neo_rainbow_start, neo_rainbow_wait,  neo_rainbow_write,    neo_rainbow_stopping,     noop},
