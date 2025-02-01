@@ -57,16 +57,18 @@ struct eeprom_in  {
 /*
  * NOTE: validation must be at index = 0
  */
-#define EEPROM_ITEMS 8
+#define EEPROM_ITEMS 10
 struct eeprom_in eeprom_input[EEPROM_ITEMS] {
   {"",                                       "Validation",    "",                                       mon_config.valid,            sizeof(mon_config.valid)},
   {"DHCP Enable (true, false)",              "WIFI DHCP",     "false",                                  mon_config.dhcp_enable,      sizeof(mon_config.dhcp_enable)},
   {"Enter WIFI SSID",                        "WIFI SSID",     "my_ssid",                                mon_config.wlan_ssid,        sizeof(mon_config.wlan_ssid)},
   {"Enter WIFI Password",                    "WIFI Password", "my_passwd",                              mon_config.wlan_pass,        sizeof(mon_config.wlan_pass)},
   {"Enter Fixed IP Addr",                    "Fixed IP Addr", "192.168.1.37",                           mon_config.ipaddr,           sizeof(mon_config.ipaddr)},
+  {"WiFi timeout (# of 500 mS tries)",       "WIFI timeout",  "10",                                     mon_config.wifitries,        sizeof(mon_config.wifitries)},
   {"Enter GMT offset (POSIX string)",        "GMT offset",    "CST6CDT,M3.2.0/2:00:00,M11.1.0/2:00:00", mon_config.tz_offset_gmt,    sizeof(mon_config.tz_offset_gmt)},
   {"Enter debug level (0 -> 9)",             "debug level",   "0",                                      mon_config.debug_level,      sizeof(mon_config.debug_level)},
   {"Enter # of neopixels",                   "# neopixel",    "24",                                     mon_config.neocount,         sizeof(mon_config.neocount)},
+  {"Enter default seq label (or \"none\")",  "def neo seq",   "none",                                   mon_config.neodefault,       sizeof(mon_config.neodefault)},
 };
 
 /*
@@ -84,9 +86,11 @@ void init_eeprom_input()  {
     eeprom_input[2].value = mon_config.wlan_ssid;
     eeprom_input[3].value = mon_config.wlan_pass;
     eeprom_input[4].value = mon_config.ipaddr;
-    eeprom_input[5].value = mon_config.tz_offset_gmt;
-    eeprom_input[6].value = mon_config.debug_level;
-    eeprom_input[7].value = mon_config.neocount;
+    eeprom_input[5].value = mon_config.wifitries;
+    eeprom_input[6].value = mon_config.tz_offset_gmt;
+    eeprom_input[7].value = mon_config.debug_level;
+    eeprom_input[8].value = mon_config.neocount;
+    eeprom_input[9].value = mon_config.neodefault;
 }
 
 /*

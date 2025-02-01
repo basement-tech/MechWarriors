@@ -271,7 +271,31 @@ void neo_write_pixel(bool clear)  {
   }
 }
 
+/*
+ * blink a status color to the strip reps times
+ * the color is from the Adafruit colorwheel representation of colors
+ *
+ * NOTE: this is a blocking function i.e. not suitable for use in the loop()
+ * NOTE: the neopixel strand must have been initialized prior to calling this function
+ *
+ */
+void neo_n_blinks(uint8_t r, uint8_t g, uint8_t b, int8_t reps)  {
+  uint32_t color = pixels->Color(r, g, b);
 
+  for(int8_t j = reps; j > 0; j--)  {
+    /*
+    * send the next point in the sequence to the strand
+    */
+    for(int i=0; i < pixels->numPixels(); i++) { // For each pixel...
+      pixels->setPixelColor(i, color);
+      pixels->show();   // Send the updated pixel colors to the hardware.
+    }
+    delay(500);
+    pixels->clear();
+    pixels->show();
+    delay(500);
+  }
+}
 
 /*
  * initialize the neopixel strand and set it to off/idle

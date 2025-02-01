@@ -26,7 +26,7 @@
  * be sure to update this string if you change the 
  * net_config struct below.
  */
-#define EEPROM_VALID  "valid_v0.6.5"
+#define EEPROM_VALID  "valid_v0.6.9"
 
 /*
  * map of the parameters stored in EEPROM
@@ -40,9 +40,11 @@ char dhcp_enable[8];     // enable/disable dhcp
 char wlan_ssid[64];      // wifi ssid
 char wlan_pass[64];      // wifi password
 char ipaddr[64];         // fixed ip address if desired/set
+char wifitries[8];       // wifi connection attempts
 char tz_offset_gmt[64];  // POSIX standard time zone string
 char debug_level[2];     // display messages at different levels of detail
 char neocount[8];        // number of neopixels in the strand
+char neodefault[16];     // label of the sequence to load at start
 };
  
 /*

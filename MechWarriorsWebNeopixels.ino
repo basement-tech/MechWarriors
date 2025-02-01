@@ -485,7 +485,6 @@ void setup(void) {
    * setup wifi to use a fixed IP address
    * attempt to convert the ip address from the eeprom, and
    * if that fails load a default address
-   * TODO: in progress - DJZ
    */
   uint8_t ip[4]; // ip address as octets
 
@@ -493,7 +492,9 @@ void setup(void) {
    * if eeprom config indicates that DHCP is disabled,
    * set the fixed ip address
    */
+  TRACE("DHCP Enable = <%s>\n", pmon_config->dhcp_enable);
   if(strcmp(pmon_config->dhcp_enable, "false") == 0)  {
+    TRACE("... setting fixed address\n");
     if(eeprom_convert_ip(pmon_config->ipaddr, ip) != 0)  {
       TRACE("Failed to convert eeprom IP address value ... loading default\n");
       ip[0] = 192; ip[1] = 168; ip[2] = 1; ip[3] = 37;
@@ -505,21 +506,54 @@ void setup(void) {
 
   // start WiFI ... DHCP by default, unless above is executed
   WiFi.mode(WIFI_STA);
-  if (strlen(ssid) == 0) {
+
+  /*
+   * case 1:
+   * if the wifi credentials were set in eeprom, attempt to use them.
+   * case 2:
+   * I think this means if ssid is not provided in secrets.h
+   * assume that it was set previously (note: there doesn't seen
+   * to be any code to do that in the example)
+   * case 3:
+   * use the credentials set in secrets.h as the fallback
+   */
+  if((strlen(pmon_config->wlan_ssid) > 0) && (strlen(pmon_config->wlan_pass) > 0))  {
+    TRACE("Wifi.begin() is using eeprom values, ssid = %s\n", pmon_config->wlan_ssid);
+    WiFi.begin(pmon_config->wlan_ssid, pmon_config->wlan_pass);
+  }
+  else if (strlen(ssid) == 0) {
     WiFi.begin();
-  } else {
+  }
+  else {
+    TRACE("Wifi.begin() is using fallback values from secrets.h, ssid = %s\n", ssid);
     WiFi.begin(ssid, passPhrase);
   }
 
-  // allow to address the device by the given name e.g. http://webserver
+  /*
+   * allow to address the device by the given name e.g. http://webserver
+   * saw a note in the reference manual that this had to happen before the WIFI.begin()
+   * but it doesn't seem to work in either place
+   */
   WiFi.setHostname(HOSTNAME);
 
+
   TRACE("Connect to WiFi...\n");
-  while (WiFi.status() != WL_CONNECTED) {
+  if((tries = atoi(pmon_config->wifitries)) < 0)
+    tries = 5;  // reuse tries from above
+  while ((WiFi.status() != WL_CONNECTED) && (tries > 0)) {
+    TRACE("%d ", tries);
     delay(500);
-    TRACE(".");
+    tries--;
   }
-  TRACE("connected at %s\n", WiFi.localIP().toString().c_str());
+  TRACE("\n");
+
+  if(WiFi.status() == WL_CONNECTED)
+    TRACE("connected at %s\n", WiFi.localIP().toString().c_str());
+  else
+    TRACE("Error connecting to %s\n", ssid);
+
+
+
 
   // Ask for the current time using NTP request builtin into ESP firmware.
   TRACE("Setup ntp...\n");
@@ -578,7 +612,21 @@ void setup(void) {
   else
     neo_init(NEO_NUMPIXELS, NEO_PIN, NEO_TYPE);
 
+  /*
+   * give a visual indicator of WiFi connection status
+   */
+  if(WiFi.status() == WL_CONNECTED)
+    neo_n_blinks(0, 128, 0, 3);  // three green blinks ... NOTE: blocking function
+  else
+    neo_n_blinks(128, 0, 0, 3);  // three red blinks ... NOTE: blocking function
 
+  /*
+   * start the default sequence from eeprom setting
+   */
+  if((strcmp(pmon_config->neodefault, "none") != 0) && (strlen(pmon_config->neodefault) > 0))  {
+    if(neo_set_sequence(pmon_config->neodefault, "") != NEO_SUCCESS)
+      TRACE("Error setting default sequence %s\n", pmon_config->neodefault);
+  }
 }  // setup
 
 
