@@ -168,6 +168,15 @@ neo_data_t neo_sequences[MAX_SEQUENCES] = {
       { 0, 0, 0, 0, -1 },
     }
   }, // rainbow
+  { "SODIUM",
+    "slowp",
+    "10",
+    {
+      { 32,  13,   1,  0,  5},
+      { 127, 87,   4,  0,  5},
+      { 0,   0,    0,  0, -1}
+    }
+  }, // sodium
   { "USER-1",
     {0},
     {0},
