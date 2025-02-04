@@ -33,6 +33,11 @@
  * named index.htm.  That's the mechanism that I used for the button page (i.e. uploaded
  * html/js for the page in a file called index.htm)
  *
+ * There are options for setting the segment sizes reserved for program, littlefs, etc.
+ * They are under the tools->Flash Size menu in the Arduino IDE.  The options available
+ * are described in (which apparently has to be modified using the tool boards.txt.py):
+ * C:\Users\djzma\AppData\Local\Arduino15\packages\esp8266\hardware\esp8266\3.1.2\boards.txt
+ *
  * Some major discoveries:
  *
  * How to get a value from an htlm button to a c language callback ?
@@ -110,11 +115,27 @@
  *   default is apparently 5
  * x Is keep-alive being used ?  After sitting, sometimes takes 10 seconds to respond
  *   see comments near webserver instantiation in this file
- * o download and install esp8266 littleFS plugin and reduce size of filesystem
+ * x download and install esp8266 littleFS plugin and reduce size of filesystem
+ *   -> can be set through Tools->Flash Size selection (with limitations)
  * o should a timer be added to drive frequency of neopixel strand updates (1mS ?) ?
  * o look at how the number of USER sequences can be dynamically done (malloc-ish)
  *   or write to a single "USER" space in the sequence array and use another means
  *   to determine if the sequence has changed on button press.
+ * o enable OTA firmware update.  Here are some key points:
+ *    Key steps:
+ *    Prepare your code:
+ *    Include the "ArduinoOTA" library in your Arduino sketch. 
+ *    Define your WiFi network credentials (SSID and password). 
+ *    Set up the ArduinoOTA.begin() function within your setup() function to initialize the OTA process. 
+ *    Add the ArduinoOTA.handle() function in your loop() function to check for incoming updates and handle the update process. 
+ *    Upload initial firmware:
+ *    Compile and upload your sketch with the OTA functionality to your ESP8266 using the Arduino IDE. 
+ *    Access the update interface:
+ *    Once connected to your network, find the IP address of your ESP8266. 
+ *    Open a web browser and navigate to the IP address to access the OTA update interface (if your code is set up to provide one). 
+ *    Send the new firmware:
+ *    Select the new firmware file you want to upload. 
+ *    Initiate the update process through the web interface. 
  * 
  *
  * (c) Daniel J. Zimmerman  Jan 2025
