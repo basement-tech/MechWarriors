@@ -91,18 +91,21 @@
  *      ...
  * 
  * How to deserialize a json string with two dimensional array ?
+ * done, see code.  Was made easier by properly formatting the json.
  *
  * don't know yet ... working it out in neo_load_sequence()
  *
  * Last couple of neopixels were flickering during playback?
- *
- * seems eliminating the clear all pixels before writing the new
- * value seemed to eliminate it.  Although might have just been that
- * the update got faster ?
+ * - fixed: two potential contributing factors: I was clearing
+ *   the strand of neopixels before writing each new value ... probably
+ *   the root cause.  I also updated the neopixel library.
+ * -seems eliminating the clear all pixels before writing the new
+ *  value seemed to eliminate it.  Although might have just been that
+ *  the update got faster ?
  *
  *
  * TODO (x = done):
- * o figure out how the DELETE works and implement it
+ * x figure out how the DELETE works and implement it
  * x single shot sequences using strategy attribute
  * x more built in sequences
  * x more different strategies for interpretting json sequence files and playout them out
@@ -660,46 +663,11 @@ void setup(void) {
    * by the browser given the Content-Type specified as the second
    * argument to the server.send() (seems that HTTP_GET is the default
    * if one types something in the address line of a browser)
-   *
-   * NOTES: 
-   * 1) forms cannot use arbitrary methods like "HTTP_DELETE";
-   *       need to use js which can.
-   * 2) forms/browser have the default action of creating something
-   *    like this by default:
-   *    GET http://192.168.1.37/$delete?name=neo_user_1.json
-   *    event.preventDefault() enables customization of action.
-   * 3) it seems that javascript? browser? server code? understands
-   *    "DELETE" to be "HTTP_DELETE" method
-   * 4) even though the above handle() code seems to add the '/' to the
-   *    start of the filename if it's missing, including the '/' makes
-   *    the delete fail
-   * 5) the above handle() code just expects the filename to be deleted,
-   *    sent with the HTTP_DELETE method ... nothing fancy.
+   * (see extensive comments in builtinfiles.h)
    */
   server.on("/$delete", HTTP_GET, []() {
-    TRACE("Request made to delete data\n");
-    server.send(200, "text/html",
-      "<script>"
-        "function deleteFile(event) {"
-        " event.preventDefault();"
-        " let filename = document.getElementById(\"filename\").value;"
-        " console.log(filename);"
-        "  fetch('/' + filename, { "
-        "   method: \"DELETE\""
-        "  })"
-        " .then(response => response.text())"
-        " .then(data => alert(\"Server response: \" + data))"
-        " .catch(error => console.error(\"Error:\", error));"
-        "}"
-      "</script>"
-      "<form onsubmit=\"deleteFile(event)\">"
-      "<label for=\"filename\">Delete File</label>"
-      "<input type=\"text\" id=\"filename\" name=\"name\" placeholder=\"Enter filename(no leading /)\"><br><br>"
-      "<button type=\"submit\">Delete</button>"
-      "</form>"
-    );
+      server.send(200, "text/html", FPSTR(deleteContent));
   });
-
 
   // register a redirect handler when only domain name is given.
   server.on("/", HTTP_GET, handleRedirect);
@@ -748,9 +716,9 @@ void setup(void) {
    * give a visual indicator of WiFi connection status
    */
   if(WiFi.status() == WL_CONNECTED)
-    neo_n_blinks(0, 128, 0, 3);  // three green blinks ... NOTE: blocking function
+    neo_n_blinks(0, 128, 0, 3, 500);  // three green blinks ... NOTE: blocking function
   else
-    neo_n_blinks(128, 0, 0, 3);  // three red blinks ... NOTE: blocking function
+    neo_n_blinks(128, 0, 0, 3, 500);  // three red blinks ... NOTE: blocking function
 
   /*
    * start the default sequence from eeprom setting
