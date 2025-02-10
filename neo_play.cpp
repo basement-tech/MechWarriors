@@ -437,11 +437,19 @@ static int8_t slowp_dir = 1;  // +1 -1 to indicate the direction we're traveling
 static uint32_t delta_time;  // calculated time between changes
 static float delta_r, delta_g, delta_b;  // calculated increment for each color ... must be floats or gets rounded to 0 between calls
 static float slowp_r, slowp_g, slowp_b;  // remember where we are in the sequence
-#define SLOWP_FLICKERS 10
-static int16_t slowp_flickers[SLOWP_FLICKERS];  // random points to flicker
+static int32_t slowp_flickers[NEO_SLOWP_FLICKERS];  // random points to flicker
 static uint8_t slowp_flicker_idx = 0;
 static int8_t flicker_dir = 0;  // flicker bright or dark
 static int8_t flicker_count = 0;  // how many flickers
+
+/*
+ * Comparison function for qsort (seems that there's an "int" somewhere
+ * buried that causes an invalid conversion of int16_t is used for type)
+ * TODO: figure it out whilst wasting 200 bytes of RAM
+ */
+static int32_t compare_ints(const void *a, const void *b) {
+    return (*(int32_t*)a - *(int32_t*)b);
+}
 
 void neo_slowp_start(bool clear)  {
 
@@ -488,7 +496,7 @@ void neo_slowp_start(bool clear)  {
    */
   if(strlen(neo_sequences[seq_index].bonus) > 0)  {
     flicker_count = atoi(neo_sequences[seq_index].bonus);
-    if(abs(flicker_count) > SLOWP_FLICKERS) flicker_count = SLOWP_FLICKERS;  //boundary check
+    if(abs(flicker_count) > NEO_SLOWP_FLICKERS) flicker_count = NEO_SLOWP_FLICKERS;  //boundary check
 
     /*
      * set the direction that the flicker brightness will take
@@ -507,7 +515,19 @@ void neo_slowp_start(bool clear)  {
     slowp_flickers[j] = random(0, NEO_SLOWP_POINTS);
 
   TRACE("Starting slowp: dr = %f, dg = %f, db = %f dt = %d\n", delta_r, delta_g, delta_b, delta_time);
-  TRACE("Randoms are:");
+  TRACE("Randoms are (unsorted):");
+  for(uint8_t j = 0; j < flicker_count; j++)
+    TRACE("%d  ", slowp_flickers[j]);
+  TRACE("\n");
+
+  /*
+   * Sort the array in place
+   * TODO: strange that it seems to only work with ints despite
+   * all of the syntax to the contrary?
+   */
+  qsort(slowp_flickers, flicker_count, sizeof(int32_t), compare_ints);
+
+  TRACE("Randoms are (sorted):");
   for(uint8_t j = 0; j < flicker_count; j++)
     TRACE("%d  ", slowp_flickers[j]);
   TRACE("\n");
@@ -574,7 +594,7 @@ void neo_slowp_write(void) {
   /*
    * send the next point in the sequence to the strand
    */
-  if(flicker_count == 0)  {
+  if(flicker_count == 0)  {  // no flickers
           r = slowp_r; g = slowp_g, b = slowp_b;
   }
   else  {

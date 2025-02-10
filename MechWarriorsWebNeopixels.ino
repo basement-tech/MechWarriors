@@ -9,13 +9,19 @@
  *
  * sequence definition and playout is custom added code, as is the
  * html/js/c to put up the button webpage and handle button input.
+ *
+ * note that files must be uploaded to the littleFS embedded file system
+ * to enable full functionality.
  * 
  * libraries used:
  * - ArduinoJson by Benoit Blanchon v7.3.0 see documentation:
  *   https://arduinojson.org/v7/tutorial/deserialization/
  * - Adafruit NeoPixel by Adafruit v1.12.3
+ * - ArduinoOTA by Arduino, Juraj Andrasy v1.1.0
+ * - webserver came as an example with esp8266 board packate
+ * 
  *
- * Some notes regarding how this works 
+ * Some notes regarding how the webserver works 
  * (see the README.md for some things regarding the webserver example):
  * 
  * The webserver application provides the web server itself, and some built in 

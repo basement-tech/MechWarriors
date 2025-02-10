@@ -14,6 +14,7 @@
 #define MAX_NEO_BONUS      16     // max chars  in strategy bonus
 #define MAX_NEO_STRATEGY   16     // max chars in a strategy string
 #define NEO_SLOWP_POINTS   1024   // number of points (smoothness) in SLOWP sequence
+#define NEO_SLOWP_FLICKERS 100    // max number of slowp random flickers
 
 /*
  * return error codes for reading a user sequence file
