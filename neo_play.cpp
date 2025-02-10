@@ -437,7 +437,7 @@ static int8_t slowp_dir = 1;  // +1 -1 to indicate the direction we're traveling
 static uint32_t delta_time;  // calculated time between changes
 static float delta_r, delta_g, delta_b;  // calculated increment for each color ... must be floats or gets rounded to 0 between calls
 static float slowp_r, slowp_g, slowp_b;  // remember where we are in the sequence
-static int32_t slowp_flickers[NEO_SLOWP_FLICKERS];  // random points to flicker
+static int16_t slowp_flickers[NEO_SLOWP_FLICKERS];  // random points to flicker
 static uint8_t slowp_flicker_idx = 0;
 static int8_t flicker_dir = 0;  // flicker bright or dark
 static int8_t flicker_count = 0;  // how many flickers
@@ -445,10 +445,13 @@ static int8_t flicker_count = 0;  // how many flickers
 /*
  * Comparison function for qsort (seems that there's an "int" somewhere
  * buried that causes an invalid conversion of int16_t is used for type)
- * TODO: figure it out whilst wasting 200 bytes of RAM
+ * TODO: figure it out whilst wasting 200 bytes of RAM ... solved:
+ * function must return an int no matter what types are being compared ... implemented, works.
  */
-static int32_t compare_ints(const void *a, const void *b) {
-    return (*(int32_t*)a - *(int32_t*)b);
+static int compare_int16_t(const void *a, const void *b) {
+    int16_t c = *(int16_t*)a;
+    int16_t d = *(int16_t*)b;
+    return (int(c - d));
 }
 
 void neo_slowp_start(bool clear)  {
@@ -523,9 +526,10 @@ void neo_slowp_start(bool clear)  {
   /*
    * Sort the array in place
    * TODO: strange that it seems to only work with ints despite
-   * all of the syntax to the contrary?
+   * all of the syntax to the contrary? ... solved: compare function must
+   * return an int no matter which type is being sorted: implemented, works.
    */
-  qsort(slowp_flickers, flicker_count, sizeof(int32_t), compare_ints);
+  qsort(slowp_flickers, flicker_count, sizeof(int16_t), compare_int16_t);
 
   TRACE("Randoms are (sorted):");
   for(uint8_t j = 0; j < flicker_count; j++)
