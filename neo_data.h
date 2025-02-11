@@ -16,6 +16,8 @@
 #define NEO_SLOWP_POINTS   1024   // number of points (smoothness) in SLOWP sequence
 #define NEO_SLOWP_FLICKERS 100    // max number of slowp random flickers
 
+#define NEO_UPDATE_INTERVAL 2000  // neopixel strand update rate in uS
+
 /*
  * return error codes for reading a user sequence file
  * and maybe other functions

@@ -176,6 +176,7 @@
 #include <FS.h>        // File System for Web Server Files
 #include <LittleFS.h>  // This file system is used.
 #include <ArduinoOTA.h>  // Over-the-air updates
+#include <ESP8266TimerInterrupt.h>  // neopixel timer
 
 #include "bt_eepromlib.h"
 #include "neo_data.h"  // for neopixels
@@ -194,6 +195,10 @@
 
 // get access to the eeprom based configuration structure
 net_config *pmon_config = get_mon_config_ptr();
+
+// define pin for debugging
+#define DEBUG_PIN (int)(-1)
+//#define DEBUG_PIN -1  // pin not initialized
 
 #ifdef CONFIG_SERVER
 /*
@@ -476,9 +481,27 @@ protected:
   File _fsUploadFile;
 };
 
+// ^^^^^^^^^^^^^^^^^^^ END OF SERVER SETUP AND CALLBACKS ^^^^^^^^^^^^^^^^^^^^^^^^
+
+/*
+ * set up the global parameters and timer callback for neopixel
+ * service function
+ */
+// Select a Timer Clock (note: this is acted upon by some #defines in the class definition file)
+#define USING_TIM_DIV1                false           // for shortest and most accurate timer  (80MHz)
+#define USING_TIM_DIV16               true            // for medium time and medium accurate timer (5 MHz)
+#define USING_TIM_DIV256              false           // for longest timer but least accurate.  (312.5 KHz)
+
+ESP8266Timer ITimer;   // Init ESP8266 timer 1
+volatile bool neo_timer_active = false;
+void IRAM_ATTR neoTimerHandler(void) {
+  neo_timer_active = true;
+}
 
 
-// SETUP everything to make the webserver work.
+/*
+ *  *****************  SETUP  ******************
+ */
 void setup(void) {
   delay(3000);  // wait for serial monitor to start completely.
 
@@ -487,7 +510,8 @@ void setup(void) {
   Serial.setDebugOutput(false);
 
   /*
-   * initialize the EEPROM
+   * initialize the EEPROM for basic bootstrapping of application
+   * (e.g. wifi credentials)
    */
   eeprom_begin();
   
@@ -733,6 +757,26 @@ void setup(void) {
     if(neo_set_sequence(pmon_config->neodefault, "") != NEO_SUCCESS)
       TRACE("Error setting default sequence %s\n", pmon_config->neodefault);
   }
+
+  /*
+   * set up the timer for the neopixel service routime
+   */
+#if !defined(ESP8266)
+  #error This code is designed to run on ESP8266 and ESP8266-based boards! Please check your Tools->Board setting.
+#endif
+  if (ITimer.attachInterruptInterval(NEO_UPDATE_INTERVAL, neoTimerHandler))
+    TRACE("Setup: neopixel timer setup successful\n");
+  else
+        TRACE("Setup: error: neopixel timer setup failed\n");
+
+  /*
+   * set up a pin for debugging
+   */
+  if(DEBUG_PIN > 0)  {
+    pinMode(DEBUG_PIN, OUTPUT);
+    digitalWrite(DEBUG_PIN, 0);
+  }
+
 }  // setup
 
 
@@ -740,7 +784,21 @@ void setup(void) {
 void loop(void) {
   server.handleClient(); // webserver requests
   ArduinoOTA.handle();   // over-the-air firmware updates
-  neo_cycle_next();      // neopixel updates
+
+  /*
+   * checking whether updates to the neopixel array
+   * are needed are on a timer that sets  neo_timer_active
+   */
+  if(neo_timer_active)  {
+    neo_cycle_next();      // neopixel updates
+    if(DEBUG_PIN > 0)
+      digitalWrite(DEBUG_PIN, neo_timer_active);
+    neo_timer_active = false;
+  }
+  else  {
+    if(DEBUG_PIN > 0)
+      digitalWrite(DEBUG_PIN, neo_timer_active);
+  }
 }  // loop()
 
 // end.
