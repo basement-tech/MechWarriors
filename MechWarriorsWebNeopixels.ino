@@ -126,7 +126,7 @@
  *   see comments near webserver instantiation in this file
  * x download and install esp8266 littleFS plugin and reduce size of filesystem
  *   -> can be set through Tools->Flash Size selection (with limitations)
- * o should a timer be added to drive frequency of neopixel strand updates (1mS ?) ?
+ * x should a timer be added to drive frequency of neopixel strand updates (2 mS )
  * o look at how the number of USER sequences can be dynamically done (malloc-ish)
  *   or write to a single "USER" space in the sequence array and use another means
  *   to determine if the sequence has changed on button press.
@@ -197,8 +197,8 @@
 net_config *pmon_config = get_mon_config_ptr();
 
 // define pin for debugging
-#define DEBUG_PIN (int)(-1)
-//#define DEBUG_PIN -1  // pin not initialized
+//#define DEBUG_PIN 16
+#define DEBUG_PIN -1  // pin not initialized
 
 #ifdef CONFIG_SERVER
 /*
@@ -206,6 +206,9 @@ net_config *pmon_config = get_mon_config_ptr();
  * takes 5-10 seconds to work.  Although, clicking in the address line
  * of the browser seems to speed it up ???
  * (the request to the server is always, eventually honored ... hmmm ?)
+ * 
+ * Update: seems to have been helped by calling the neopixel update
+ * on a timer so that the webserver update call gets more time.
  *
  * was trying to follow this ... not sure it's for this implementation:
  * https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/protocols/esp_http_server.html#_CPPv414httpd_config_t
@@ -772,7 +775,7 @@ void setup(void) {
   /*
    * set up a pin for debugging
    */
-  if(DEBUG_PIN > 0)  {
+  if(DEBUG_PIN >= 0)  {
     pinMode(DEBUG_PIN, OUTPUT);
     digitalWrite(DEBUG_PIN, 0);
   }
@@ -788,16 +791,23 @@ void loop(void) {
   /*
    * checking whether updates to the neopixel array
    * are needed are on a timer that sets  neo_timer_active
+   *
+   * With the debug pin configured as shown, the following timings
+   * were observed:
+   * no update: ~10uS pulse width every 2 mS
+   * (apparent) update running rainbow : ~1.75 mS pulse width every other call to neo_cycle_next()
+   * (apparent) update running slowp: ~1.5 mS pulse width every other call to neo_cycle_next()
+   *
    */
   if(neo_timer_active)  {
+#if DEBUG_PIN >= 0
+    digitalWrite(DEBUG_PIN, true);
+#endif
     neo_cycle_next();      // neopixel updates
-    if(DEBUG_PIN > 0)
-      digitalWrite(DEBUG_PIN, neo_timer_active);
     neo_timer_active = false;
-  }
-  else  {
-    if(DEBUG_PIN > 0)
-      digitalWrite(DEBUG_PIN, neo_timer_active);
+#if DEBUG_PIN >= 0
+    digitalWrite(DEBUG_PIN, false);
+#endif
   }
 }  // loop()
 
