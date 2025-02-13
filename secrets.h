@@ -10,8 +10,8 @@
 
 // add you wifi network name and PassPhrase or use WiFi Manager
 #ifndef STASSID
-#define STASSID "yourssid"
-#define STAPSK "yourpasswd"
+#define STASSID "guest"
+#define STAPSK ""
 #endif
 
 const char *ssid = STASSID;

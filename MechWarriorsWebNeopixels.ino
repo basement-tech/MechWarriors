@@ -588,10 +588,11 @@ void setup(void) {
    * if the wifi credentials were set in eeprom, attempt to use them.
    * case 2:
    * I think this means if ssid is not provided in secrets.h
-   * assume that it was set previously (note: there doesn't seen
+   * assume that it was set previously (note: there doesn't seem
    * to be any code to do that in the example)
    * case 3:
    * use the credentials set in secrets.h as the fallback
+   * TODO: clean this up
    */
   if((strlen(pmon_config->wlan_ssid) > 0) && (strlen(pmon_config->wlan_pass) > 0))  {
     TRACE("Wifi.begin() is using eeprom values, ssid = %s\n", pmon_config->wlan_ssid);
