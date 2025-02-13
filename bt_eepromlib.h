@@ -21,6 +21,11 @@
 #define EEPROM_RESERVE 1024
 
 /*
+ * this message is displayed when asking for user input
+ */
+#define EEPROM_INTRO_MSG "neopixel fun by daniel@basementtech and zimtech, LLC"
+
+/*
  * string to match for validation
  * this indicates the version/structure of the EEPROM too.
  * be sure to update this string if you change the 

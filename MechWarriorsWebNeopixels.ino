@@ -111,6 +111,9 @@
  *
  *
  * TODO (x = done):
+ * o allow use of sequences based on user files as default
+ * o change fallback wifi credentials on initial failure ?
+ *   - set secrets.h to guest (done)
  * x figure out how the DELETE works and implement it
  * x single shot sequences using strategy attribute
  * x more built in sequences
@@ -518,6 +521,9 @@ void setup(void) {
    */
   eeprom_begin();
   
+  Serial.println();
+  Serial.println(EEPROM_INTRO_MSG);
+  Serial.println();
   Serial.println("Press any key to change settings");
 
   int8_t tries = 5;
