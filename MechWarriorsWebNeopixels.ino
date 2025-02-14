@@ -173,6 +173,7 @@
 #include <Arduino.h>
 #include <ESP8266WebServer.h>
 #include <ArduinoJson.h>
+#include <ESP8266mDNS.h>
 
 #include "secrets.h"  // add WLAN Credentials in here.
 
@@ -624,8 +625,16 @@ void setup(void) {
   }
   TRACE("\n");
 
-  if(WiFi.status() == WL_CONNECTED)
+  if(WiFi.status() == WL_CONNECTED)  {
     TRACE("connected at %s\n", WiFi.localIP().toString().c_str());
+    TRACE("Starting multicast ...\n");
+    if(MDNS.begin(HOSTNAME))  {
+      TRACE("mDNS responder started successfully\n");
+      MDNS.addService("http", "tcp", 80);  // Register HTTP service on port 80
+    }
+    else
+      TRACE("mDNS responder failed to start\n");
+  }
   else
     TRACE("Error connecting to %s\n", ssid);
 
@@ -754,6 +763,7 @@ void setup(void) {
 
   /*
    * give a visual indicator of WiFi connection status
+   * (don't forget, needs to be after neopixels are started)
    */
   if(WiFi.status() == WL_CONNECTED)
     neo_n_blinks(0, 128, 0, 3, 500);  // three green blinks ... NOTE: blocking function
@@ -794,6 +804,7 @@ void setup(void) {
 void loop(void) {
   server.handleClient(); // webserver requests
   ArduinoOTA.handle();   // over-the-air firmware updates
+  MDNS.update();
 
   /*
    * checking whether updates to the neopixel array
