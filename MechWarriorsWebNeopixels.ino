@@ -583,6 +583,13 @@ void setup(void) {
 
   // start WiFI ... DHCP by default, unless above is executed
   WiFi.mode(WIFI_STA);
+  
+  /*
+   * allow to address the device by the given name e.g. http://webserver
+   * saw a note in the reference manual that this had to happen before the WIFI.begin()
+   * I moved it up here
+   */
+  WiFi.setHostname(HOSTNAME);
 
   /*
    * case 1:
@@ -607,12 +614,6 @@ void setup(void) {
     WiFi.begin(ssid, passPhrase);
   }
 
-  /*
-   * allow to address the device by the given name e.g. http://webserver
-   * saw a note in the reference manual that this had to happen before the WIFI.begin()
-   * but it doesn't seem to work in either place
-   */
-  WiFi.setHostname(HOSTNAME);
 
 
   TRACE("Connect to WiFi...\n");
