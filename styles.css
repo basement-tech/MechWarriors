@@ -6,6 +6,7 @@ label {
 
 .color-control-button {
   width: 100%;
+  border-radius: 12px;
   border: none;
   padding: 1rem;
   font-weight: bold;
