@@ -18,7 +18,8 @@
  *   https://arduinojson.org/v7/tutorial/deserialization/
  * - Adafruit NeoPixel by Adafruit v1.12.3
  * - ArduinoOTA by Arduino, Juraj Andrasy v1.1.0
- * - webserver came as an example with esp8266 board packate
+ * - ESP8266TimerInterrupt by Khoi Hoang v1.6.0
+ * - webserver came as an example with esp8266 board package
  * 
  *
  * Some notes regarding how the webserver works 
@@ -179,7 +180,15 @@
 #include <FS.h>        // File System for Web Server Files
 #include <LittleFS.h>  // This file system is used.
 #include <ArduinoOTA.h>  // Over-the-air updates
+
+/*
+ * use the ESP8266TimerInterrupt by Khoi Hoang to generate
+ * a high resolution application timer.  I would like to use his
+ * multiple timer (based on one interrupt timer), but it is stuck
+ * using mS's as interval.
+ */
 #include <ESP8266TimerInterrupt.h>  // neopixel timer
+
 
 #include "bt_eepromlib.h"
 #include "neo_data.h"  // for neopixels
@@ -499,9 +508,38 @@ protected:
 #define USING_TIM_DIV256              false           // for longest timer but least accurate.  (312.5 KHz)
 
 ESP8266Timer ITimer;   // Init ESP8266 timer 1
+
+/*
+ * neopixel update related timer stuff
+ */
 volatile bool neo_timer_active = false;
+volatile uint32_t neo_us_cnt = 0;   // neopixel update timer
 void IRAM_ATTR neoTimerHandler(void) {
   neo_timer_active = true;
+}
+
+/*
+ * servo pulse interval (start of pulse)
+ */
+volatile uint32_t ser_us_cnt = 0;   // servo pulse interval timer
+void IRAM_ATTR ser_Timer_Handler(void)  {
+
+}
+
+/*
+ * servo pulse width (end of pulse)
+ */
+volatile uint32_t serpw_us_cnt = 0; // servo pulse width timer
+void IRAM_ATTR serpw_Timer_Handler(void)  {
+
+}
+
+
+void IRAM_ATTR baseTimerHandler(void) {
+  if(++neo_us_cnt >= (uint32_t)NEO_UPDATE_INTERVAL)  {
+    neoTimerHandler();
+    neo_us_cnt = 0;
+  }
 }
 
 
@@ -778,10 +816,14 @@ void setup(void) {
 #if !defined(ESP8266)
   #error This code is designed to run on ESP8266 and ESP8266-based boards! Please check your Tools->Board setting.
 #endif
-  if (ITimer.attachInterruptInterval(NEO_UPDATE_INTERVAL, neoTimerHandler))
-    TRACE("Setup: neopixel timer setup successful\n");
+
+  /*
+   * set up the 2uS base local tick timer
+   */
+  if (ITimer.attachInterruptInterval(1, baseTimerHandler))
+    TRACE("Setup: basetimer setup successful\n");
   else
-        TRACE("Setup: error: neopixel timer setup failed\n");
+    TRACE("Setup: error: base timer setup failed\n");
 
   /*
    * set up a pin for debugging
