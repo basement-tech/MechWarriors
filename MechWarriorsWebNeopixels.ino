@@ -209,8 +209,8 @@
 net_config *pmon_config = get_mon_config_ptr();
 
 // define pin for debugging
-//#define DEBUG_PIN 16
-#define DEBUG_PIN -1  // pin not initialized
+#define DEBUG_PIN 16
+//#define DEBUG_PIN -1  // pin not initialized
 
 #ifdef CONFIG_SERVER
 /*
@@ -507,38 +507,51 @@ protected:
 #define USING_TIM_DIV16               true            // for medium time and medium accurate timer (5 MHz)
 #define USING_TIM_DIV256              false           // for longest timer but least accurate.  (312.5 KHz)
 
-ESP8266Timer ITimer;   // Init ESP8266 timer 1
+ESP8266Timer ITimer;   // Init ESP8266 timer 1 ... aka "base timer"
 
 /*
  * neopixel update related timer stuff
  */
 volatile bool neo_timer_active = false;
-volatile uint32_t neo_us_cnt = 0;   // neopixel update timer
-void IRAM_ATTR neoTimerHandler(void) {
-  neo_timer_active = true;
-}
+volatile uint8_t neo_us_cnt = 0;   // neopixel update timer ... pay attention to byte width vs max count
 
 /*
  * servo pulse interval (start of pulse)
  */
 volatile uint32_t ser_us_cnt = 0;   // servo pulse interval timer
-void IRAM_ATTR ser_Timer_Handler(void)  {
+volatile bool servo_pulse_high = false;
 
-}
 
 /*
  * servo pulse width (end of pulse)
  */
 volatile uint32_t serpw_us_cnt = 0; // servo pulse width timer
-void IRAM_ATTR serpw_Timer_Handler(void)  {
-
-}
 
 
+/*
+ * service all of the local counter based timer actions
+ * (decided it wasn't worth a complicated mechanism with
+ *  callbacks, etc. here)
+ */
 void IRAM_ATTR baseTimerHandler(void) {
-  if(++neo_us_cnt >= (uint32_t)NEO_UPDATE_INTERVAL)  {
-    neoTimerHandler();
+  if(++neo_us_cnt >= (uint8_t)NEO_UPDATE_INTERVAL)  {
+    neo_timer_active = true;
     neo_us_cnt = 0;
+  }
+  
+  if(servo_pulse_high == false)  {
+    if(++ser_us_cnt >= 200) {
+      ser_us_cnt = 0;
+      servo_pulse_high = true;
+      digitalWrite(DEBUG_PIN, true);
+    }
+  }
+  else  {
+    if(++serpw_us_cnt >= 5)  {
+      serpw_us_cnt = 0;
+      servo_pulse_high = false;
+      digitalWrite(DEBUG_PIN, false);
+    }
   }
 }
 
@@ -818,9 +831,9 @@ void setup(void) {
 #endif
 
   /*
-   * set up the 2uS base local tick timer
+   * set up the base local tick timer
    */
-  if (ITimer.attachInterruptInterval(1, baseTimerHandler))
+  if (ITimer.attachInterruptInterval(BASE_TIMER_INTV_US, baseTimerHandler))
     TRACE("Setup: basetimer setup successful\n");
   else
     TRACE("Setup: error: base timer setup failed\n");
@@ -845,7 +858,7 @@ void loop(void) {
    * checking whether updates to the neopixel array
    * are needed are on a timer that sets  neo_timer_active
    *
-   * With the debug pin configured as shown, the following timings
+   * With the debug pin configured arount neo_cycle_next(), the following timings
    * were observed:
    * no update: ~10uS pulse width every 2 mS
    * (apparent) update running rainbow : ~1.75 mS pulse width every other call to neo_cycle_next()
@@ -853,14 +866,8 @@ void loop(void) {
    *
    */
   if(neo_timer_active)  {
-#if DEBUG_PIN >= 0
-    digitalWrite(DEBUG_PIN, true);
-#endif
     neo_cycle_next();      // neopixel updates
     neo_timer_active = false;
-#if DEBUG_PIN >= 0
-    digitalWrite(DEBUG_PIN, false);
-#endif
   }
 }  // loop()
 
