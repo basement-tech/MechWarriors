@@ -112,6 +112,7 @@
  *
  *
  * TODO (x = done):
+ * o do I need to add something to get the esp8266 to remember the last successful WiFi connection ?
  * o allow use of sequences based on user files as default
  * x change fallback wifi credentials on initial failure ?
  *   - set secrets.h to guest (done)

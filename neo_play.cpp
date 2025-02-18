@@ -455,6 +455,13 @@ static int compare_int16_t(const void *a, const void *b) {
     return (int(c - d));
 }
 
+static uint8_t neo_check_range(int32_t testval)  {
+  uint8_t retval = testval;
+  if(testval < 0) retval = 0;
+  if(testval > 255)  retval = 255;
+  return(retval);
+}
+
 void neo_slowp_start(bool clear)  {
 
   slowp_idx = 0;
@@ -518,7 +525,7 @@ void neo_slowp_start(bool clear)  {
   for(uint8_t j = 0; j < flicker_count; j++)
     slowp_flickers[j] = random(0, NEO_SLOWP_POINTS);
 
-  DEBUG_DEBUG("Starting slowp: dr = %f, dg = %f, db = %f dt = %d\n", delta_r, delta_g, delta_b, delta_time);
+  DEBUG_INFO("Starting slowp: dr = %f, dg = %f, db = %f dt = %d\n", delta_r, delta_g, delta_b, delta_time);
   DEBUG_VERBOSE("Randoms are (unsorted):");
   for(uint8_t j = 0; j < flicker_count; j++)
     DEBUG_VERBOSE("%d  ", slowp_flickers[j]);
@@ -646,6 +653,122 @@ void neo_slowp_wait(void)  {
 // end of SEQ_STRAT_SLOWP callbacks
 
 /*
+ * SEQ_STRAT_PONG
+ * one lighted pixel moves from one end to the other and back
+ * in a continuous ping-poing
+ * two lines are expected in the sequence file:
+ *   - first line is the starting intensity/color and time between movements
+ *   - second line is the ending intensity/color
+ *
+ * NOTE: we're going to borrow much of the functionality and global variables
+ *       from slowP ... but no flicker stuff:
+ *  slowp_idx : tracks the lit pixel
+ *  slowp_dir : going up or down the strand (pinging or ponging)
+ */
+uint16_t p_num_pixels = 0;  // will use this shortcut alot
+void neo_pong_start(bool clear)  {
+
+  slowp_idx = 0;
+  slowp_dir = 1;  // start by going up
+
+  p_num_pixels = pixels->numPixels();
+
+
+  /*
+   * calculate delta time in mS based on the first (and only)
+   * line in the json sequence file
+   */
+  delta_time = (neo_sequences[seq_index].point[0].ms_after_last) / p_num_pixels;
+
+  /*
+   * calculate the delta chance for each color
+   * the first line in the json sequence has the max/endpoint
+   * of the sequence
+   *
+   */
+  delta_r = (neo_sequences[seq_index].point[1].red - neo_sequences[seq_index].point[0].red) / (float)p_num_pixels;  // cast needed to force floating point math
+  delta_g = (neo_sequences[seq_index].point[1].green - neo_sequences[seq_index].point[0].green) / (float)p_num_pixels;
+  delta_b = (neo_sequences[seq_index].point[1].blue - neo_sequences[seq_index].point[0].blue) / (float)p_num_pixels;
+
+  /*
+   * start from the json specified starting point
+   */
+  slowp_r = neo_check_range(neo_sequences[seq_index].point[0].red);
+  slowp_g = neo_check_range(neo_sequences[seq_index].point[0].green);
+  slowp_b = neo_check_range(neo_sequences[seq_index].point[0].blue);
+
+  pixels->clear();
+  pixels->show();
+
+  current_millis = millis();
+
+  DEBUG_INFO("Starting pong: dr = %f, dg = %f, db = %f dt = %d\n", delta_r, delta_g, delta_b, delta_time);
+
+  neo_state = NEO_SEQ_WAIT;
+}
+
+void neo_pong_write(void) {
+  uint8_t r, g, b;
+
+  /*
+   * currently going up
+   */
+  if(slowp_dir > 0)  {
+    if(slowp_idx < p_num_pixels)  {  // have not reached the top of the sequence
+      slowp_r = neo_check_range(slowp_r += delta_r);  // could be by rounding error
+      slowp_g = neo_check_range(slowp_g += delta_g);
+      slowp_b = neo_check_range(slowp_b += delta_b);
+      slowp_idx++;
+    }
+    else  {
+      slowp_dir = -1;  // change to going down
+      slowp_idx--;
+
+      /*
+       * reset to the ending point in case of rounding error
+       */
+      slowp_r = neo_check_range(neo_sequences[seq_index].point[1].red);
+      slowp_g = neo_check_range(neo_sequences[seq_index].point[1].green);
+      slowp_b = neo_check_range(neo_sequences[seq_index].point[1].blue);
+    }
+  }
+
+  /*
+   * currently going down
+   */
+  else  {
+    if(slowp_idx > 0)  {
+      slowp_r = neo_check_range(slowp_r -= delta_r);  // could be by rounding error
+      slowp_g = neo_check_range(slowp_g -= delta_g);
+      slowp_b = neo_check_range(slowp_b -= delta_b);
+      slowp_idx--;
+    }
+    else  {
+      slowp_dir = 1;  // change to going down
+      slowp_idx++;
+
+      /*
+       * reset to the starting point  in case of rounding error
+       */
+      slowp_r = neo_check_range(neo_sequences[seq_index].point[0].red);
+      slowp_g = neo_check_range(neo_sequences[seq_index].point[0].green);
+      slowp_b = neo_check_range(neo_sequences[seq_index].point[0].blue);
+    }
+  }
+
+  /*
+   * send the next point in the sequence to the strand
+   */
+  pixels->clear();  // first turn them all off
+  pixels->setPixelColor(slowp_idx, pixels->Color(slowp_r, slowp_g, slowp_b));  // turn on the next one
+  pixels->show();   // Send the updated pixel colors to the hardware.
+
+  neo_state = NEO_SEQ_WAIT;
+}
+
+// end of SEQ_STRAT_PONG
+
+/*
  * SEQ_STRAT_RAINBOW
  * cycle a rainbow color pallette along the whole strip
  * (adapted from the Adafruit strandtest example)
@@ -715,7 +838,7 @@ seq_callbacks_t seq_callbacks[NEO_SEQ_STRATEGIES] = {
   { SEQ_STRAT_POINTS,    "points",         neo_points_start,  neo_points_wait,   neo_points_write,    neo_points_stopping,      noop},
   { SEQ_STRAT_SINGLE,    "single",         neo_single_start,  neo_points_wait,   neo_single_write,    neo_points_stopping,      noop},
   { SEQ_STRAT_CHASE,     "xchase",          start_noop,           noop,               noop,                 noop,               noop},
-  { SEQ_STRAT_PONG,      "xpong",           start_noop,           noop,               noop,                 noop,               noop},
+  { SEQ_STRAT_PONG,      "pong",           neo_pong_start,    neo_slowp_wait,    neo_pong_write,      neo_points_stopping,      noop},
   { SEQ_STRAT_RAINBOW,   "rainbow",       neo_rainbow_start, neo_rainbow_wait,  neo_rainbow_write,    neo_rainbow_stopping,     noop},
   { SEQ_STRAT_SLOWP,     "slowp",          neo_slowp_start,   neo_slowp_wait,    neo_slowp_write,     neo_points_stopping,      noop},
 };
