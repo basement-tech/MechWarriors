@@ -18,6 +18,7 @@
  *   https://arduinojson.org/v7/tutorial/deserialization/
  * - Adafruit NeoPixel by Adafruit v1.12.3
  * - ArduinoOTA by Arduino, Juraj Andrasy v1.1.0
+ * - Arduino_DebugUtils by Arduino v1.4.0
  * - webserver came as an example with esp8266 board packate
  * 
  *
@@ -173,6 +174,7 @@
 #include <Arduino.h>
 #include <ESP8266WebServer.h>
 #include <ArduinoJson.h>
+#include <Arduino_DebugUtils.h>
 
 #include "secrets.h"  // add WLAN Credentials in here.
 
@@ -187,8 +189,8 @@
 // mark parameters not used in example
 #define UNUSED __attribute__((unused))
 
-// TRACE output simplified, can be deactivated here
-#define TRACE(...) Serial.printf(__VA_ARGS__)
+// TRACE output simplified, can be deactivated here ... replaced with Arduino debug library
+//#define TRACE(...) Serial.printf(__VA_ARGS__)
 
 // name of the server. You reach it using http://webserver
 #define HOSTNAME "warhammer"
@@ -251,7 +253,7 @@ ESP8266WebServer server(80);
 //
 // this is used to display the main page after having uploaded a index.htm page with buttons
 void handleRedirect() {
-  TRACE("Redirect...");
+  DEBUG_INFO("Redirect...");
   String url = "/index.htm";
 
   if (!LittleFS.exists(url)) { url = "/$update.htm"; }
@@ -344,9 +346,9 @@ void handleButton()  {
      * get the value of the button pressed
      */
     String body = server.arg("plain");
-    TRACE("Button pressed: ");
+    DEBUG_DEBUG("Button pressed: ");
     body.toCharArray(buf, sizeof(buf));
-    TRACE("return buffer <%s>\n", buf);
+    DEBUG_DEBUG("return buffer <%s>\n", buf);
 
     /*
      * parse the json to get to just the sequence label
@@ -359,17 +361,17 @@ void handleButton()  {
 
     err = deserializeJson(jsonDoc, buf);
     if(err)  {
-      TRACE("Deserialization of button failed: %s\n", err.f_str());
+      DEBUG_ERROR("Deserialization of button failed: %s\n", err.f_str());
       neoerr = NEO_DESERR;
     }
     else  {
-      TRACE("json parsing successful, extracting value\n");
+      DEBUG_DEBUG("json parsing successful, extracting value\n");
       seq = jsonDoc["sequence"];
       /*
        * process the button that was pressed based on the seq string
        */
       if(seq != NULL)  {
-        TRACE("Setting sequence to %s\n", seq);
+        DEBUG_INFO("Setting sequence to %s\n", seq);
 
         /*
          * was it the stop button
@@ -383,7 +385,7 @@ void handleButton()  {
          */
         else if((neo_is_user(seq)) == NEO_SUCCESS)  {
           if((neoerr = neo_load_sequence(jsonDoc["file"])) != NEO_SUCCESS)
-            TRACE("Error loading sequence file after proper detection\n");
+            DEBUG_ERROR("Error loading sequence file after proper detection\n");
         }
 
         /*
@@ -393,12 +395,12 @@ void handleButton()  {
          */
         else  {
           if((neoerr = neo_set_sequence(seq, "")) != NEO_SUCCESS)
-            TRACE("Error setting sequence after proper detection\n");
+            DEBUG_ERROR("Error setting sequence after proper detection\n");
         }
       }
       else  {
         neoerr = NEO_NOPLACE;
-        TRACE("\"sequence\" not found in json data\n");
+        DEBUG_ERROR("\"sequence\" not found in json data\n");
       }
     }
     if(neoerr != NEO_SUCCESS)
@@ -423,7 +425,7 @@ public:
   // @param path Path to the root folder in the file system that is used for serving static data down and upload.
   // @param cache_header Cache Header to be used in replies.
   FileServerHandler() {
-    TRACE("FileServerHandler is registered\n");
+    DEBUG_INFO("FileServerHandler is registered\n");
   }
 
 
@@ -453,7 +455,7 @@ public:
     } else if (requestMethod == HTTP_DELETE) {
       if (LittleFS.exists(fName)) { 
         LittleFS.remove(fName);
-        TRACE("handle: %s deleted successfully\n", fName.c_str());
+        DEBUG_INFO("handle: %s deleted successfully\n", fName.c_str());
       }
     }  // if
 
@@ -513,11 +515,27 @@ void setup(void) {
 
   // Use Serial port for some trace information from the example
   Serial.begin(115200);
-  Serial.setDebugOutput(false);
+  //Serial.setDebugOutput(false);  // TODO: what is this ???
+
+  /*
+   * set the debug message level:
+   * DBG_NONE - no debug output is shown
+   * DBG_ERROR - critical errors
+   * DBG_WARNING - non-critical errors
+   * DBG_INFO - information
+   * DBG_DEBUG - more information
+   * DBG_VERBOSE - most information
+   * NOTE: these map to integers -1 to 4 ... a little hacky, but
+   *       use the epprom value in the same way
+   */
+  Debug.setDebugLevel(DBG_VERBOSE);  // bootstrap here; set when eeprom is connected
+  Debug.newlineOff();
 
   /*
    * initialize the EEPROM for basic bootstrapping of application
    * (e.g. wifi credentials)
+   *
+   * NOTE: don't use the Arduino debug library for this part
    */
   eeprom_begin();
   
@@ -548,11 +566,22 @@ void setup(void) {
    */
   eeprom_user_input(out);
 
-  TRACE("Starting WebServer example...\n");
+  /*
+   * once all of the eeprom setup is done,
+   * set the debug level (see above for other comments)
+   */
+  int8_t debug_level = DBG_VERBOSE;
+  debug_level = atoi(pmon_config->debug_level);
+  if(debug_level < -1) debug_level = DBG_NONE;
+  if(debug_level > 4)  debug_level = DBG_VERBOSE;
+  Debug.setDebugLevel(DBG_VERBOSE);  // bootstrap here; set when eeprom is connected
+  DEBUG_INFO("Debug level set to %d\n", debug_level);
 
-  TRACE("Mounting the filesystem...\n");
+  DEBUG_INFO("Starting WebServer ...\n");
+
+  DEBUG_INFO("Mounting the filesystem...\n");
   if (!LittleFS.begin()) {
-    TRACE("could not mount the filesystem...\n");
+    DEBUG_ERROR("could not mount the filesystem...\n");
     delay(2000);
     ESP.restart();
   }
@@ -568,11 +597,11 @@ void setup(void) {
    * if eeprom config indicates that DHCP is disabled,
    * set the fixed ip address
    */
-  TRACE("DHCP Enable = <%s>\n", pmon_config->dhcp_enable);
+  DEBUG_INFO("DHCP Enable = <%s>\n", pmon_config->dhcp_enable);
   if(strcmp(pmon_config->dhcp_enable, "false") == 0)  {
-    TRACE("... setting fixed address\n");
+    DEBUG_INFO("... setting fixed address\n");
     if(eeprom_convert_ip(pmon_config->ipaddr, ip) != 0)  {
-      TRACE("Failed to convert eeprom IP address value ... loading default\n");
+      DEBUG_ERROR("Failed to convert eeprom IP address value ... loading default\n");
       ip[0] = 192; ip[1] = 168; ip[2] = 1; ip[3] = 37;
     }
     const byte gateway[] = {192, 168, 1, 1}; // Gateway address
@@ -604,34 +633,34 @@ void setup(void) {
    * TODO: clean this up
    */
   if((strlen(pmon_config->wlan_ssid) > 0) && (strlen(pmon_config->wlan_pass) > 0))  {
-    TRACE("Wifi.begin() is using eeprom values, ssid = %s\n", pmon_config->wlan_ssid);
+    DEBUG_INFO("Wifi.begin() is using eeprom values, ssid = %s\n", pmon_config->wlan_ssid);
     WiFi.begin(pmon_config->wlan_ssid, pmon_config->wlan_pass);
   }
   else if (strlen(ssid) == 0) {
     WiFi.begin();
   }
   else {
-    TRACE("Wifi.begin() is using fallback values from secrets.h, ssid = %s\n", ssid);
+    DEBUG_INFO("Wifi.begin() is using fallback values from secrets.h, ssid = %s\n", ssid);
     WiFi.begin(ssid, passPhrase);
   }
 
 
 
 
-  TRACE("Connect to WiFi...\n");
+  DEBUG_INFO("Connect to WiFi...\n");
   if((tries = atoi(pmon_config->wifitries)) < 0)
     tries = 5;  // reuse tries from above
   while ((WiFi.status() != WL_CONNECTED) && (tries > 0)) {
-    TRACE("%d ", tries);
+    DEBUG_INFO("%d ", tries);
     delay(500);
     tries--;
   }
-  TRACE("\n");
+  DEBUG_INFO("\n");
 
   if(WiFi.status() == WL_CONNECTED)
-    TRACE("connected at %s\n", WiFi.localIP().toString().c_str());
+    DEBUG_INFO("connected at %s\n", WiFi.localIP().toString().c_str());
   else
-    TRACE("Error connecting to %s\n", ssid);
+    DEBUG_ERROR("Error connecting to %s\n", ssid);
 
 
   /*
@@ -686,13 +715,13 @@ void setup(void) {
 
 
   // Ask for the current time using NTP request builtin into ESP firmware.
-  TRACE("Setup ntp...\n");
+  DEBUG_INFO("Setup ntp...\n");
   if(strlen(pmon_config->tz_offset_gmt) > 0)
     configTime(pmon_config->tz_offset_gmt, "pool.ntp.org");
   else
     configTime(TIMEZONE, "pool.ntp.org");
 
-  TRACE("Register service handlers...\n");
+  DEBUG_INFO("Register service handlers...\n");
 
   // serve a built-in htm page
   server.on("/$upload.htm", []() {
@@ -747,10 +776,10 @@ void setup(void) {
   });
 
   server.begin();
-  TRACE("hostname=%s\n", WiFi.getHostname());
+  DEBUG_INFO("hostname=%s\n", WiFi.getHostname());
 
   // initialize neopixel strip
-  TRACE("Initialize neopixel strip with %d pixels...\n", atoi(pmon_config->neocount));
+  DEBUG_INFO("Initialize neopixel strip with %d pixels...\n", atoi(pmon_config->neocount));
   if(atoi(pmon_config->neocount) > 0)
     neo_init(atoi(pmon_config->neocount), NEO_PIN, NEO_TYPE);
   else
@@ -769,7 +798,7 @@ void setup(void) {
    */
   if((strcmp(pmon_config->neodefault, "none") != 0) && (strlen(pmon_config->neodefault) > 0))  {
     if(neo_set_sequence(pmon_config->neodefault, "") != NEO_SUCCESS)
-      TRACE("Error setting default sequence %s\n", pmon_config->neodefault);
+      DEBUG_ERROR("Error setting default sequence %s\n", pmon_config->neodefault);
   }
 
   /*
@@ -779,9 +808,9 @@ void setup(void) {
   #error This code is designed to run on ESP8266 and ESP8266-based boards! Please check your Tools->Board setting.
 #endif
   if (ITimer.attachInterruptInterval(NEO_UPDATE_INTERVAL, neoTimerHandler))
-    TRACE("Setup: neopixel timer setup successful\n");
+    DEBUG_DEBUG("Setup: neopixel timer setup successful\n");
   else
-        TRACE("Setup: error: neopixel timer setup failed\n");
+        DEBUG_ERROR("Setup: error: neopixel timer setup failed\n");
 
   /*
    * set up a pin for debugging
@@ -796,6 +825,8 @@ void setup(void) {
 
 // run the server...
 void loop(void) {
+
+
   server.handleClient(); // webserver requests
   ArduinoOTA.handle();   // over-the-air firmware updates
 
