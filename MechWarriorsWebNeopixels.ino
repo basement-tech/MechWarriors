@@ -113,14 +113,14 @@
  *
  * TODO (x = done):
  * o allow use of sequences based on user files as default
- * o change fallback wifi credentials on initial failure ?
+ * x change fallback wifi credentials on initial failure ?
  *   - set secrets.h to guest (done)
  * x figure out how the DELETE works and implement it
  * x single shot sequences using strategy attribute
  * x more built in sequences
  * x more different strategies for interpretting json sequence files and playout them out
  * o chase, pong, x rainbow, x slowfade (color, intensity range, speed)
- * o how to set debug levels and clean up use of TRACE()
+ * x how to set debug levels and clean up use of TRACE()
  * o how can I publicise the ip address when using DHCP
  *   and use http://hostname or http://hostname.local
  * x add eeprom parm for enable/disable DHCP
@@ -510,6 +510,32 @@ void IRAM_ATTR neoTimerHandler(void) {
 /*
  *  *****************  SETUP  ******************
  */
+
+/*
+ * little helper to wait for the wifi connection
+ */
+wl_status_t l_wifi_wait(void)  {
+  int8_t tries = -1;
+
+  DEBUG_INFO("Connecting to WiFi...\n");
+  if((tries = atoi(pmon_config->wifitries)) < 0)
+    tries = 10;  // default to 10 ... seems to take about 6 on my local network
+  while ((WiFi.status() != WL_CONNECTED) && (tries > 0)) {
+    DEBUG_INFO("%d ", tries);
+    delay(500);
+    tries--;
+  }
+  DEBUG_INFO("\n");
+
+  if(WiFi.status() == WL_CONNECTED)
+    DEBUG_INFO("connected at %s\n", WiFi.localIP().toString().c_str());
+  else
+    DEBUG_ERROR("ERROR: Error connecting WiFi\n");
+  
+  return(WiFi.status());
+}
+
+
 void setup(void) {
   delay(3000);  // wait for serial monitor to start completely.
 
@@ -622,45 +648,34 @@ void setup(void) {
   WiFi.setHostname(HOSTNAME);
 
   /*
+   * attempt these three cases to connect to WiFi:
+   *
    * case 1:
-   * if the wifi credentials were set in eeprom, attempt to use them.
+   *   if the wifi credentials were set in eeprom, attempt to use them.
    * case 2:
-   * I think this means if ssid is not provided in secrets.h
-   * assume that it was set previously (note: there doesn't seem
-   * to be any code to do that in the example)
+   *   attempt to connect to using the last good wifi credentials
+   *   that the esp stores in non-volatile memory
    * case 3:
-   * use the credentials set in secrets.h as the fallback
-   * TODO: clean this up
+   *   use the credentials set in secrets.h as the fallback
    */
+  wl_status_t wifi_status = WL_DISCONNECTED;
   if((strlen(pmon_config->wlan_ssid) > 0) && (strlen(pmon_config->wlan_pass) > 0))  {
     DEBUG_INFO("Wifi.begin() is using eeprom values, ssid = %s\n", pmon_config->wlan_ssid);
     WiFi.begin(pmon_config->wlan_ssid, pmon_config->wlan_pass);
+    wifi_status = l_wifi_wait();
   }
-  else if (strlen(ssid) == 0) {
+
+  if (wifi_status != WL_CONNECTED) {
+    DEBUG_WARNING("WARNING: Wifi.begin() is using the last known wifi (stored in nonvolatile memory)\n");
     WiFi.begin();
+    wifi_status = l_wifi_wait();
   }
-  else {
-    DEBUG_INFO("Wifi.begin() is using fallback values from secrets.h, ssid = %s\n", ssid);
+
+  if(wifi_status != WL_CONNECTED) {
+    DEBUG_WARNING("WARNING: Wifi.begin() is using fallback values from secrets.h, ssid = %s\n", ssid);
     WiFi.begin(ssid, passPhrase);
+    l_wifi_wait();
   }
-
-
-
-
-  DEBUG_INFO("Connect to WiFi...\n");
-  if((tries = atoi(pmon_config->wifitries)) < 0)
-    tries = 5;  // reuse tries from above
-  while ((WiFi.status() != WL_CONNECTED) && (tries > 0)) {
-    DEBUG_INFO("%d ", tries);
-    delay(500);
-    tries--;
-  }
-  DEBUG_INFO("\n");
-
-  if(WiFi.status() == WL_CONNECTED)
-    DEBUG_INFO("connected at %s\n", WiFi.localIP().toString().c_str());
-  else
-    DEBUG_ERROR("ERROR: Error connecting to %s\n", ssid);
 
 
   /*
