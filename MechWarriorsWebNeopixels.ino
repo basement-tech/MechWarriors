@@ -253,7 +253,7 @@ ESP8266WebServer server(80);
 //
 // this is used to display the main page after having uploaded a index.htm page with buttons
 void handleRedirect() {
-  DEBUG_INFO("Redirect...");
+  DEBUG_INFO("Redirect...\n");
   String url = "/index.htm";
 
   if (!LittleFS.exists(url)) { url = "/$update.htm"; }
@@ -361,7 +361,7 @@ void handleButton()  {
 
     err = deserializeJson(jsonDoc, buf);
     if(err)  {
-      DEBUG_ERROR("Deserialization of button failed: %s\n", err.f_str());
+      DEBUG_ERROR("ERROR: Deserialization of button failed: %s\n", err.f_str());
       neoerr = NEO_DESERR;
     }
     else  {
@@ -385,7 +385,7 @@ void handleButton()  {
          */
         else if((neo_is_user(seq)) == NEO_SUCCESS)  {
           if((neoerr = neo_load_sequence(jsonDoc["file"])) != NEO_SUCCESS)
-            DEBUG_ERROR("Error loading sequence file after proper detection\n");
+            DEBUG_ERROR("ERROR: Error loading sequence file after proper detection\n");
         }
 
         /*
@@ -395,12 +395,12 @@ void handleButton()  {
          */
         else  {
           if((neoerr = neo_set_sequence(seq, "")) != NEO_SUCCESS)
-            DEBUG_ERROR("Error setting sequence after proper detection\n");
+            DEBUG_ERROR("ERROR: Error setting sequence after proper detection\n");
         }
       }
       else  {
         neoerr = NEO_NOPLACE;
-        DEBUG_ERROR("\"sequence\" not found in json data\n");
+        DEBUG_ERROR("ERROR: \"sequence\" not found in json data\n");
       }
     }
     if(neoerr != NEO_SUCCESS)
@@ -570,18 +570,18 @@ void setup(void) {
    * once all of the eeprom setup is done,
    * set the debug level (see above for other comments)
    */
-  int8_t debug_level = DBG_VERBOSE;
+  int debug_level = DBG_VERBOSE;
   debug_level = atoi(pmon_config->debug_level);
   if(debug_level < -1) debug_level = DBG_NONE;
   if(debug_level > 4)  debug_level = DBG_VERBOSE;
-  Debug.setDebugLevel(DBG_VERBOSE);  // bootstrap here; set when eeprom is connected
-  DEBUG_INFO("Debug level set to %d\n", debug_level);
+  Debug.setDebugLevel(debug_level);
+  DEBUG_INFO("Debug level set to %d\n", Debug.getDebugLevel());
 
   DEBUG_INFO("Starting WebServer ...\n");
 
   DEBUG_INFO("Mounting the filesystem...\n");
   if (!LittleFS.begin()) {
-    DEBUG_ERROR("could not mount the filesystem...\n");
+    DEBUG_ERROR("ERROR: Could not mount the filesystem...\n");
     delay(2000);
     ESP.restart();
   }
@@ -601,7 +601,7 @@ void setup(void) {
   if(strcmp(pmon_config->dhcp_enable, "false") == 0)  {
     DEBUG_INFO("... setting fixed address\n");
     if(eeprom_convert_ip(pmon_config->ipaddr, ip) != 0)  {
-      DEBUG_ERROR("Failed to convert eeprom IP address value ... loading default\n");
+      DEBUG_ERROR("ERROR: Failed to convert eeprom IP address value ... loading default\n");
       ip[0] = 192; ip[1] = 168; ip[2] = 1; ip[3] = 37;
     }
     const byte gateway[] = {192, 168, 1, 1}; // Gateway address
@@ -660,7 +660,7 @@ void setup(void) {
   if(WiFi.status() == WL_CONNECTED)
     DEBUG_INFO("connected at %s\n", WiFi.localIP().toString().c_str());
   else
-    DEBUG_ERROR("Error connecting to %s\n", ssid);
+    DEBUG_ERROR("ERROR: Error connecting to %s\n", ssid);
 
 
   /*
@@ -798,7 +798,7 @@ void setup(void) {
    */
   if((strcmp(pmon_config->neodefault, "none") != 0) && (strlen(pmon_config->neodefault) > 0))  {
     if(neo_set_sequence(pmon_config->neodefault, "") != NEO_SUCCESS)
-      DEBUG_ERROR("Error setting default sequence %s\n", pmon_config->neodefault);
+      DEBUG_ERROR("ERROR: Error setting default sequence %s\n", pmon_config->neodefault);
   }
 
   /*
@@ -810,7 +810,7 @@ void setup(void) {
   if (ITimer.attachInterruptInterval(NEO_UPDATE_INTERVAL, neoTimerHandler))
     DEBUG_DEBUG("Setup: neopixel timer setup successful\n");
   else
-        DEBUG_ERROR("Setup: error: neopixel timer setup failed\n");
+        DEBUG_ERROR("ERROR: Setup: error: neopixel timer setup failed\n");
 
   /*
    * set up a pin for debugging

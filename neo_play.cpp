@@ -2,6 +2,7 @@
  * functions to play out the neo_pixel patterns
  */
 #include <Arduino.h>
+#include <Arduino_DebugUtils.h>
 #include <Adafruit_NeoPixel.h>
 
 #include <FS.h>        // File System for Web Server Files
@@ -11,8 +12,8 @@
 
 #include "neo_data.h"
 
-// TRACE output simplified, can be deactivated here
-#define TRACE(...) Serial.printf(__VA_ARGS__)
+// TRACE output simplified, can be deactivated here ... switched to arduino debug library
+//#define TRACE(...) Serial.printf(__VA_ARGS__)
 
 // When setting up the NeoPixel library, we tell it how many pixels,
 // and which pin to use to send signals. Note that for older NeoPixel
@@ -89,7 +90,7 @@ int8_t neo_set_sequence(const char *label, const char *strategy)  {
    * the initialized value
    */
   if(strategy[0] == '\0')  {
-    TRACE("neo_set_sequence: using built in strategy %s for seq_index %d\n", neo_sequences[seq_index].strategy,seq_index);
+    DEBUG_INFO("neo_set_sequence: using built in strategy %s for seq_index %d\n", neo_sequences[seq_index].strategy,seq_index);
     if(ret == NEO_SUCCESS)  {
       if((new_strat = neo_set_strategy(neo_sequences[seq_index].strategy)) == SEQ_STRAT_UNDEFINED)
         ret = NEO_STRAT_ERR;
@@ -112,7 +113,7 @@ int8_t neo_set_sequence(const char *label, const char *strategy)  {
     current_index = 0;  // reset the pixel count
     neo_state = NEO_SEQ_START;  // cause the state machine to start at the start
     current_strategy = new_strat;
-    TRACE("neo_set_sequence: set sequence to %d and strategy to %d\n", seq_index, current_strategy);
+    DEBUG_INFO("neo_set_sequence: set sequence to %d and strategy to %d\n", seq_index, current_strategy);
   }
 
   return(ret);
@@ -160,20 +161,20 @@ int8_t neo_load_sequence(const char *file)  {
   /*
    * can I see the FS from here ? ... yep.
    */
-  TRACE("Total bytes in FS = %d\n", fs_info.totalBytes);
-  TRACE("Total bytes used in FS = %d\n", fs_info.usedBytes);
+  DEBUG_INFO("Total bytes in FS = %d\n", fs_info.totalBytes);
+  DEBUG_INFO("Total bytes used in FS = %d\n", fs_info.usedBytes);
 
   /*
    * read the contents of the user sequence file and put it
    * in the character buffer buf
    */
   if (LittleFS.exists(file) == false)  {
-      TRACE("Filename %s does not exist in file system\n", file);
+      DEBUG_ERROR("ERROR: Filename %s does not exist in file system\n", file);
       ret = NEO_FILE_LOAD_NOFILE;
   }
   else  {
 
-    TRACE("Loading filename %s ...\n", file);
+    DEBUG_INFO("Loading filename %s ...\n", file);
     if((fd = LittleFS.open(file, "r")) == false)  
       ret = NEO_FILE_LOAD_NOFILE;
 
@@ -183,7 +184,7 @@ int8_t neo_load_sequence(const char *file)  {
       }
       *pbuf = '\0';  // terminate the char string
       fd.close();
-      TRACE("Raw file contents:\n%s\n", buf);
+      DEBUG_VERBOSE("Raw file contents:\n%s\n", buf);
 
       /*
       * deserialize the json contents of the file which
@@ -191,7 +192,7 @@ int8_t neo_load_sequence(const char *file)  {
       */
       err = deserializeJson(jsonDoc, buf);
       if(err)  {
-        TRACE("Deserialization of file %s failed ... no change in sequence\n", file);
+        DEBUG_ERROR("ERROR: Deserialization of file %s failed ... no change in sequence\n", file);
         ret = NEO_FILE_LOAD_DESERR;
       }
 
@@ -204,8 +205,8 @@ int8_t neo_load_sequence(const char *file)  {
         const char *label, *bonus;
         label = jsonDoc["label"];
         bonus = jsonDoc["bonus"];
-        TRACE("For sequence \"%s\" : \n", label);
-        TRACE("   \"bonus\": %s\n", bonus);
+        DEBUG_INFO("For sequence \"%s\" : \n", label);
+        DEBUG_INFO("   \"bonus\": %s\n", bonus);
         int8_t seq_idx = neo_find_sequence(label);
 
         /*
@@ -216,7 +217,7 @@ int8_t neo_load_sequence(const char *file)  {
         */
         if(seq_idx < 0)  {
           ret = NEO_FILE_LOAD_NOPLACE;
-          TRACE("neo_load_sequence: no placeholder for %s in sequence array\n", label);
+          DEBUG_ERROR("ERROR: neo_load_sequence: no placeholder for %s in sequence array\n", label);
         }
 
         /*
@@ -237,7 +238,7 @@ int8_t neo_load_sequence(const char *file)  {
             b = obj["b"];
             w = obj["w"];
             t = obj["t"];
-            TRACE("colors = %d %d %d %d  interval = %d\n", r, g, b, w, t);
+            DEBUG_INFO("colors = %d %d %d %d  interval = %d\n", r, g, b, w, t);
             neo_sequences[seq_idx].point[i].red = r;
             neo_sequences[seq_idx].point[i].green = g;
             neo_sequences[seq_idx].point[i].blue = b;
@@ -517,11 +518,11 @@ void neo_slowp_start(bool clear)  {
   for(uint8_t j = 0; j < flicker_count; j++)
     slowp_flickers[j] = random(0, NEO_SLOWP_POINTS);
 
-  TRACE("Starting slowp: dr = %f, dg = %f, db = %f dt = %d\n", delta_r, delta_g, delta_b, delta_time);
-  TRACE("Randoms are (unsorted):");
+  DEBUG_DEBUG("Starting slowp: dr = %f, dg = %f, db = %f dt = %d\n", delta_r, delta_g, delta_b, delta_time);
+  DEBUG_VERBOSE("Randoms are (unsorted):");
   for(uint8_t j = 0; j < flicker_count; j++)
-    TRACE("%d  ", slowp_flickers[j]);
-  TRACE("\n");
+    DEBUG_VERBOSE("%d  ", slowp_flickers[j]);
+  DEBUG_VERBOSE("\n");
 
   /*
    * Sort the array in place
@@ -531,10 +532,10 @@ void neo_slowp_start(bool clear)  {
    */
   qsort(slowp_flickers, flicker_count, sizeof(int16_t), compare_int16_t);
 
-  TRACE("Randoms are (sorted):");
+  DEBUG_INFO("Randoms are (sorted):");
   for(uint8_t j = 0; j < flicker_count; j++)
-    TRACE("%d  ", slowp_flickers[j]);
-  TRACE("\n");
+    DEBUG_INFO("%d  ", slowp_flickers[j]);
+  DEBUG_INFO("\n");
 
   pixels->clear();
   pixels->show();
@@ -619,7 +620,7 @@ void neo_slowp_write(void) {
   pixels->show();   // Send the updated pixel colors to the hardware.
 
 #ifdef DEBUG_HACK
-  TRACE("neo_slowp_write: Showed %d  %d  %d\n", slowp_r, slowp_g, slowp_b);
+  DEBUG_VERBOSE("neo_slowp_write: Showed %d  %d  %d\n", slowp_r, slowp_g, slowp_b);
   while(Serial.available() == 0);
   Serial.read();
 #endif
