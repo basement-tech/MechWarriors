@@ -693,15 +693,17 @@ void neo_pong_start(bool clear)  {
   /*
    * start from the json specified starting point
    */
-  slowp_r = neo_check_range(neo_sequences[seq_index].point[0].red);
-  slowp_g = neo_check_range(neo_sequences[seq_index].point[0].green);
-  slowp_b = neo_check_range(neo_sequences[seq_index].point[0].blue);
+  slowp_r = neo_sequences[seq_index].point[0].red;
+  slowp_g = neo_sequences[seq_index].point[0].green;
+  slowp_b = neo_sequences[seq_index].point[0].blue;
 
   /*
    * clear and set the first point here
    */
   pixels->clear();
-  pixels->setPixelColor(slowp_idx, pixels->Color(slowp_r, slowp_g, slowp_b));  // turn on the next one
+  pixels->setPixelColor(slowp_idx, pixels->Color( neo_check_range(slowp_r),
+                                                  neo_check_range(slowp_g),
+                                                  neo_check_range(slowp_b)));  // turn on the next one
   pixels->show();
 
   current_millis = millis();
@@ -720,9 +722,9 @@ void neo_pong_write(void) {
   if(slowp_dir > 0)  {  // currently going up
     slowp_idx++;
     if(slowp_idx < p_num_pixels)  {  // have not reached the top of the sequence
-      slowp_r = neo_check_range(slowp_r += delta_r);  // could be by rounding error
-      slowp_g = neo_check_range(slowp_g += delta_g);
-      slowp_b = neo_check_range(slowp_b += delta_b);
+      slowp_r += delta_r;
+      slowp_g += delta_g;
+      slowp_b += delta_b;
     }
     else  {
       slowp_dir = -1;  // change to going down
@@ -731,9 +733,9 @@ void neo_pong_write(void) {
       /*
        * reset to the ending point in case of rounding error
        */
-      slowp_r = neo_check_range(neo_sequences[seq_index].point[1].red);
-      slowp_g = neo_check_range(neo_sequences[seq_index].point[1].green);
-      slowp_b = neo_check_range(neo_sequences[seq_index].point[1].blue);
+      slowp_r = neo_sequences[seq_index].point[1].red;
+      slowp_g = neo_sequences[seq_index].point[1].green;
+      slowp_b = neo_sequences[seq_index].point[1].blue;
     }
   }
 
@@ -743,9 +745,9 @@ void neo_pong_write(void) {
   else  {
     slowp_idx--;
     if(slowp_idx >= 0)  {
-      slowp_r = neo_check_range(slowp_r -= delta_r);  // could be by rounding error
-      slowp_g = neo_check_range(slowp_g -= delta_g);
-      slowp_b = neo_check_range(slowp_b -= delta_b);
+      slowp_r -= delta_r;
+      slowp_g -= delta_g;
+      slowp_b -= delta_b;
     }
     else  {
       slowp_dir = 1;  // change to going down
@@ -754,9 +756,9 @@ void neo_pong_write(void) {
       /*
        * reset to the starting point  in case of rounding error
        */
-      slowp_r = neo_check_range(neo_sequences[seq_index].point[0].red);
-      slowp_g = neo_check_range(neo_sequences[seq_index].point[0].green);
-      slowp_b = neo_check_range(neo_sequences[seq_index].point[0].blue);
+      slowp_r = neo_sequences[seq_index].point[0].red;
+      slowp_g = neo_sequences[seq_index].point[0].green;
+      slowp_b = neo_sequences[seq_index].point[0].blue;
     }
   }
 
@@ -764,7 +766,9 @@ void neo_pong_write(void) {
    * send the next point in the sequence to the strand
    */
   pixels->clear();  // first turn them all off
-  pixels->setPixelColor(slowp_idx, pixels->Color(slowp_r, slowp_g, slowp_b));  // turn on the next one
+  pixels->setPixelColor(slowp_idx, pixels->Color( neo_check_range(slowp_r),
+                                                  neo_check_range(slowp_g),
+                                                  neo_check_range(slowp_b)));  // turn on the next one
   pixels->show();   // Send the updated pixel colors to the hardware.
 
   neo_state = NEO_SEQ_WAIT;
