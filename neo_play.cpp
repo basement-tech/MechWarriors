@@ -675,7 +675,7 @@ void neo_pong_start(bool clear)  {
 
 
   /*
-   * calculate delta time in mS based on the first (and only)
+   * calculate delta time in mS based on the first
    * line in the json sequence file
    */
   delta_time = (neo_sequences[seq_index].point[0].ms_after_last) / p_num_pixels;
@@ -686,9 +686,9 @@ void neo_pong_start(bool clear)  {
    * of the sequence
    *
    */
-  delta_r = (neo_sequences[seq_index].point[1].red - neo_sequences[seq_index].point[0].red) / (float)p_num_pixels;  // cast needed to force floating point math
-  delta_g = (neo_sequences[seq_index].point[1].green - neo_sequences[seq_index].point[0].green) / (float)p_num_pixels;
-  delta_b = (neo_sequences[seq_index].point[1].blue - neo_sequences[seq_index].point[0].blue) / (float)p_num_pixels;
+  delta_r = (neo_sequences[seq_index].point[1].red - neo_sequences[seq_index].point[0].red) / (float)(p_num_pixels-1);  // cast needed to force floating point math
+  delta_g = (neo_sequences[seq_index].point[1].green - neo_sequences[seq_index].point[0].green) / (float)(p_num_pixels-1);
+  delta_b = (neo_sequences[seq_index].point[1].blue - neo_sequences[seq_index].point[0].blue) / (float)(p_num_pixels-1);
 
   /*
    * start from the json specified starting point
@@ -697,7 +697,11 @@ void neo_pong_start(bool clear)  {
   slowp_g = neo_check_range(neo_sequences[seq_index].point[0].green);
   slowp_b = neo_check_range(neo_sequences[seq_index].point[0].blue);
 
+  /*
+   * clear and set the first point here
+   */
   pixels->clear();
+  pixels->setPixelColor(slowp_idx, pixels->Color(slowp_r, slowp_g, slowp_b));  // turn on the next one
   pixels->show();
 
   current_millis = millis();
@@ -709,16 +713,16 @@ void neo_pong_start(bool clear)  {
 
 void neo_pong_write(void) {
   uint8_t r, g, b;
-
+  
   /*
-   * currently going up
+   * calculate the rgb values
    */
-  if(slowp_dir > 0)  {
+  if(slowp_dir > 0)  {  // currently going up
+    slowp_idx++;
     if(slowp_idx < p_num_pixels)  {  // have not reached the top of the sequence
       slowp_r = neo_check_range(slowp_r += delta_r);  // could be by rounding error
       slowp_g = neo_check_range(slowp_g += delta_g);
       slowp_b = neo_check_range(slowp_b += delta_b);
-      slowp_idx++;
     }
     else  {
       slowp_dir = -1;  // change to going down
@@ -737,11 +741,11 @@ void neo_pong_write(void) {
    * currently going down
    */
   else  {
-    if(slowp_idx > 0)  {
+    slowp_idx--;
+    if(slowp_idx >= 0)  {
       slowp_r = neo_check_range(slowp_r -= delta_r);  // could be by rounding error
       slowp_g = neo_check_range(slowp_g -= delta_g);
       slowp_b = neo_check_range(slowp_b -= delta_b);
-      slowp_idx--;
     }
     else  {
       slowp_dir = 1;  // change to going down
