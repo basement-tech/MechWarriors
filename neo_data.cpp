@@ -170,7 +170,7 @@ neo_data_t neo_sequences[MAX_SEQUENCES] = {
   }, // rainbow
   { "SODIUM",
     "slowp",
-    "10",
+    "{\"count\" : \"10\"}",
     {
       { 32,  13,   1,  0,  5},
       { 127, 87,   4,  0,  5},

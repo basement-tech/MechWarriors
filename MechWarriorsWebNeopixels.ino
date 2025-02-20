@@ -112,6 +112,7 @@
  *
  *
  * TODO (x = done):
+ * o slowp: add r, g, b to bonus string to set flicker up
  * o do I need to add something to get the esp8266 to remember the last successful WiFi connection ?
  * o allow use of sequences based on user files as default
  * x change fallback wifi credentials on initial failure ?
@@ -120,7 +121,7 @@
  * x single shot sequences using strategy attribute
  * x more built in sequences
  * x more different strategies for interpretting json sequence files and playout them out
- * o chase, pong, x rainbow, x slowfade (color, intensity range, speed)
+ * o chase, x pong, x rainbow, x slowfade (color, intensity range, speed)
  * x how to set debug levels and clean up use of TRACE()
  * o how can I publicise the ip address when using DHCP
  *   and use http://hostname or http://hostname.local

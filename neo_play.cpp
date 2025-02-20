@@ -205,9 +205,15 @@ int8_t neo_load_sequence(const char *file)  {
         const char *label, *bonus;
         label = jsonDoc["label"];
         bonus = jsonDoc["bonus"];
+#ifdef NEWSTUFF
+        // reserialize the bonus object for later deserialization
+        serializeJson(jsonDoc["bonus"], bonus);
+#endif
         DEBUG_INFO("For sequence \"%s\" : \n", label);
         DEBUG_INFO("   \"bonus\": %s\n", bonus);
         int8_t seq_idx = neo_find_sequence(label);
+
+
 
         /*
         * iterate over the points in the array
@@ -469,7 +475,9 @@ void neo_slowp_start(bool clear)  {
   slowp_flicker_idx = 0;  // start at the start
   flicker_count = 0;  // assume none to Start
 
-
+  JsonDocument jsonDoc;
+  DeserializationError err;
+  const char *jbuf;  // jsonDoc[] requires this type
 
   /*
    * calculate delta time in mS based on the first (and only)
@@ -499,7 +507,26 @@ void neo_slowp_start(bool clear)  {
    * based on the "bonus" parameter from the json sequence file
    */
   if(strlen(neo_sequences[seq_index].bonus) > 0)  {
-    flicker_count = atoi(neo_sequences[seq_index].bonus);
+    DEBUG_DEBUG("neo_slowp_start: bonus = %s\n", neo_sequences[seq_index].bonus);
+//    flicker_count = atoi(neo_sequences[seq_index].bonus);
+
+    err = deserializeJson(jsonDoc, neo_sequences[seq_index].bonus);
+
+    if(err)  {
+      DEBUG_ERROR("ERROR: Deserialization of bonus failed ... using zero\n");
+      flicker_count = 0;
+    }
+    else  {
+      if(jsonDoc["count"].isNull())  {
+        DEBUG_ERROR("ERROR: slowp bonus has no member \"count\" ... using zero\n");
+        flicker_count = 0;
+      }
+      else  {
+        jbuf = jsonDoc["count"];
+        flicker_count = atoi(jbuf);
+      }
+    }
+
     if(abs(flicker_count) > NEO_SLOWP_FLICKERS) flicker_count = NEO_SLOWP_FLICKERS;  //boundary check
 
     /*
