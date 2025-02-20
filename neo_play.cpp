@@ -439,7 +439,7 @@ static uint32_t delta_time;  // calculated time between changes
 static float delta_r, delta_g, delta_b;  // calculated increment for each color ... must be floats or gets rounded to 0 between calls
 static float slowp_r, slowp_g, slowp_b;  // remember where we are in the sequence
 static int16_t slowp_flickers[NEO_SLOWP_FLICKERS];  // random points to flicker
-static uint8_t slowp_flicker_idx = 0;
+static int16_t slowp_flicker_idx = 0;
 static int8_t flicker_dir = 0;  // flicker bright or dark
 static int8_t flicker_count = 0;  // how many flickers
 
@@ -486,13 +486,6 @@ void neo_slowp_start(bool clear)  {
   delta_r = (neo_sequences[seq_index].point[1].red - neo_sequences[seq_index].point[0].red) / (float)NEO_SLOWP_POINTS;  // cast needed to force floating point math
   delta_g = (neo_sequences[seq_index].point[1].green - neo_sequences[seq_index].point[0].green) / (float)NEO_SLOWP_POINTS;
   delta_b = (neo_sequences[seq_index].point[1].blue - neo_sequences[seq_index].point[0].blue) / (float)NEO_SLOWP_POINTS;
-
-  /*
-   * test for bad input and cause no intensity if bad
-   */
-  if(delta_r < 0)  delta_r = 0;
-  if(delta_g < 0)  delta_g = 0;
-  if(delta_b < 0)  delta_b = 0;
 
   /*
    * start from the json specified starting point
@@ -562,9 +555,9 @@ void neo_slowp_write(void) {
    */
   if(slowp_dir > 0)  {
     if(slowp_idx < NEO_SLOWP_POINTS)  {  // have not reached the top of the sequence
-      if((slowp_r += delta_r) > 255) slowp_r = 255;  // could be by rounding error
-      if((slowp_g += delta_g) > 255) slowp_g = 255;
-      if((slowp_b += delta_b) > 255) slowp_b = 255;
+      slowp_r += delta_r;
+      slowp_g += delta_g;
+      slowp_b += delta_b;
       slowp_idx++;
     }
     else  {
@@ -584,10 +577,10 @@ void neo_slowp_write(void) {
    * currently going down
    */
   else  {
-    if(slowp_idx > 0)  {  // list terminator: nothing to write
-      if((slowp_r -= delta_r) < 0) slowp_r = 0;
-      if((slowp_g -= delta_g) < 0) slowp_g = 0;
-      if((slowp_b -= delta_b) < 0) slowp_b = 0;
+    if(slowp_idx > 0)  { 
+      slowp_r -= delta_r;
+      slowp_g -= delta_g;
+      slowp_b -= delta_b;
       slowp_idx--;
     }
     else  {
@@ -607,19 +600,33 @@ void neo_slowp_write(void) {
    * send the next point in the sequence to the strand
    */
   if(flicker_count == 0)  {  // no flickers
-          r = slowp_r; g = slowp_g, b = slowp_b;
+          r = neo_check_range(slowp_r);
+          g = neo_check_range(slowp_g);
+          b = neo_check_range(slowp_b);
   }
   else  {
     if(slowp_idx == slowp_flickers[slowp_flicker_idx])  {
       if(flicker_dir > 0)
-        r = g = b = 255;
+        r = g = b = NEO_FLICKER_MAX;
       else
-        r = g = b = 0;
-      if(++slowp_flicker_idx > flicker_count)
-        slowp_flicker_idx = 0;
+        r = g = b = NEO_FLICKER_MIN;
+
+      if(slowp_dir > 0)  {
+        if(++slowp_flicker_idx >= flicker_count)
+          slowp_flicker_idx = flicker_count - 1;
+      }
+      else  {
+        if(--slowp_flicker_idx < 0)
+          slowp_flicker_idx = 0;
+      }
+//      DEBUG_DEBUG("slowp_flicker_idx = %d\n", slowp_flicker_idx);
     }
-    else
-      r = slowp_r; g = slowp_g, b = slowp_b;
+    else  {
+      r = neo_check_range(slowp_r);
+      g = neo_check_range(slowp_g);
+      b = neo_check_range(slowp_b);
+
+    }
   }
   for(int i=0; i < pixels->numPixels(); i++)  // For each pixel...
       pixels->setPixelColor(i, pixels->Color(r, g, b));
