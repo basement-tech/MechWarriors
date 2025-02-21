@@ -508,8 +508,9 @@ void neo_slowp_start(bool clear)  {
    */
   if(strlen(neo_sequences[seq_index].bonus) > 0)  {
     DEBUG_DEBUG("neo_slowp_start: bonus = %s\n", neo_sequences[seq_index].bonus);
-//    flicker_count = atoi(neo_sequences[seq_index].bonus);
+    flicker_count = atoi(neo_sequences[seq_index].bonus);
 
+#ifdef NEW_STUFF
     err = deserializeJson(jsonDoc, neo_sequences[seq_index].bonus);
 
     if(err)  {
@@ -526,6 +527,7 @@ void neo_slowp_start(bool clear)  {
         flicker_count = atoi(jbuf);
       }
     }
+  #endif
 
     if(abs(flicker_count) > NEO_SLOWP_FLICKERS) flicker_count = NEO_SLOWP_FLICKERS;  //boundary check
 
@@ -542,8 +544,13 @@ void neo_slowp_start(bool clear)  {
     flicker_count = abs(flicker_count);
   }
   randomSeed(analogRead(0));  // different each time through
-  for(uint8_t j = 0; j < flicker_count; j++)
+  for(uint8_t j = 0; j < flicker_count; j++)  {
     slowp_flickers[j] = random(0, NEO_SLOWP_POINTS);
+    if(slowp_flickers[j] == (int16_t)0)
+      slowp_flickers[j] = 1;  // stay away from the turn-arounds
+    else if(slowp_flickers[j] == (int16_t)(NEO_SLOWP_POINTS-1))
+      slowp_flickers[j] = (NEO_SLOWP_POINTS-2);
+  }
 
   DEBUG_INFO("Starting slowp: dr = %f, dg = %f, db = %f dt = %d\n", delta_r, delta_g, delta_b, delta_time);
   DEBUG_VERBOSE("Randoms are (unsorted):");
@@ -564,8 +571,17 @@ void neo_slowp_start(bool clear)  {
     DEBUG_INFO("%d  ", slowp_flickers[j]);
   DEBUG_INFO("\n");
 
+  uint8_t r = neo_check_range(slowp_r);
+  uint8_t g = neo_check_range(slowp_g);
+  uint8_t b = neo_check_range(slowp_b);
+
+  /*
+   * clear and write the starting value
+   */
   pixels->clear();
-  pixels->show();
+  for(int i=0; i < pixels->numPixels(); i++)  // For each pixel...
+      pixels->setPixelColor(i, pixels->Color(r, g, b));
+  pixels->show();   // Send the updated pixel colors to the hardware.
 
   current_millis = millis();
 
@@ -577,19 +593,20 @@ void neo_slowp_start(bool clear)  {
 void neo_slowp_write(void) {
   uint8_t r, g, b;
 
+  //DEBUG_DEBUG("slowp_idx = %d\n", slowp_idx); // warning: burps out a lot of stuff
+
   /*
    * currently going up
    */
   if(slowp_dir > 0)  {
-    if(slowp_idx < NEO_SLOWP_POINTS)  {  // have not reached the top of the sequence
-      slowp_r += delta_r;
+    if(++slowp_idx < NEO_SLOWP_POINTS)  {  // have not reached the top of the sequence
+      slowp_r += delta_r;  // increment by the delta per point change
       slowp_g += delta_g;
       slowp_b += delta_b;
-      slowp_idx++;
     }
     else  {
       slowp_dir = -1;  // change to going down
-      slowp_idx--;
+      slowp_idx--;  // decrement back to the top since we incremented past
 
       /*
        * reset to the ending point in case of rounding error
@@ -604,11 +621,10 @@ void neo_slowp_write(void) {
    * currently going down
    */
   else  {
-    if(slowp_idx > 0)  { 
+    if(--slowp_idx >= 0)  { 
       slowp_r -= delta_r;
       slowp_g -= delta_g;
       slowp_b -= delta_b;
-      slowp_idx--;
     }
     else  {
       slowp_dir = 1;  // change to going down
