@@ -383,7 +383,8 @@ void neo_points_stopping(void)  {
  * SEQ_STRAT_SINGLE
  * each line in the json is a single point in the sequence.
  * the "t" times are mS between points
- * the sequence runs once per button press and stops
+ * the sequence runs the number of times given by the "count"
+ * json parameter in the bonus string.
  *
  * NOTE: keep neo_points_start() in sync with neo_single_start()
  * when making changes.
@@ -394,7 +395,7 @@ void neo_single_start(bool clear) {
   JsonDocument jsonDoc;
   DeserializationError err;
   const char *jbuf;  // jsonDoc[] requires this type
-  
+
   neo_write_pixel(true);  // clear the strand and write the first value
 
   /*
@@ -403,8 +404,6 @@ void neo_single_start(bool clear) {
    * times the sequence is repeated, otherwise just indicate
    * that the sequence should be played once.
    */
-  //if(strlen(neo_sequences[seq_index].bonus) > 0)
-  //  single_repeats = atoi(neo_sequences[seq_index].bonus);
 
   /*
    * obtain the number of times the "single" sequence will be run
