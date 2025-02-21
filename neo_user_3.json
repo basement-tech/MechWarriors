@@ -1,7 +1,7 @@
 {
     "label" : "USER-3",
     "strategy" : "single",
-    "bonus" : "3",
+    "bonus" : { "count" : "2", "flicker" : {"r": 255,  "g": 0,    "b": 0,  "w": 0, "t": 5}},
     "points" : [
       {"r": 16,  "g": 0,    "b": 0,   "w": 0, "t": 500  },
       {"r": 32,  "g": 32,   "b": 0,   "w": 0, "t": 500  },

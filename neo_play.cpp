@@ -335,6 +335,8 @@ void start_noop(bool clear) {}
  * the "t" times are mS between points
  * the sequence restarts at the end and runs continuously
  *
+ * bonus: none
+ *
  * NOTE: keep neo_points_start() in sync with neo_single_start()
  * when making changes.
  */
@@ -389,6 +391,10 @@ void neo_points_stopping(void)  {
 static int8_t single_repeats = 1;
 
 void neo_single_start(bool clear) {
+  JsonDocument jsonDoc;
+  DeserializationError err;
+  const char *jbuf;  // jsonDoc[] requires this type
+  
   neo_write_pixel(true);  // clear the strand and write the first value
 
   /*
@@ -397,8 +403,34 @@ void neo_single_start(bool clear) {
    * times the sequence is repeated, otherwise just indicate
    * that the sequence should be played once.
    */
-  if(strlen(neo_sequences[seq_index].bonus) > 0)
-    single_repeats = atoi(neo_sequences[seq_index].bonus);
+  //if(strlen(neo_sequences[seq_index].bonus) > 0)
+  //  single_repeats = atoi(neo_sequences[seq_index].bonus);
+
+  /*
+   * obtain the number of times the "single" sequence will be run
+   * based on the "bonus" parameter from the json sequence file
+   */
+  if(strlen(neo_sequences[seq_index].bonus) > 0)  {
+    DEBUG_DEBUG("neo_single_start: bonus = %s\n", neo_sequences[seq_index].bonus);
+
+    err = deserializeJson(jsonDoc, neo_sequences[seq_index].bonus);
+
+    if(err)  {
+      DEBUG_ERROR("ERROR: Deserialization of bonus failed ... using zero\n");
+      single_repeats = 1;  // default to 1 time through
+    }
+    else  {
+      if(jsonDoc["count"].isNull())  {
+        DEBUG_ERROR("WARNING: slowp bonus has no member \"count\" ... using zero\n");
+        single_repeats = 1;
+      }
+      else  {
+        jbuf = jsonDoc["count"];
+        single_repeats = atoi(jbuf);
+        DEBUG_DEBUG("neo_single_start: single_repeats set to %d\n", single_repeats);
+      }
+    }
+  }
   else
     single_repeats = 1;
 
@@ -439,10 +471,11 @@ void neo_single_write(void) {
  * - the interval between changes is based on the "t" seconds parameter
  * - the delta change is calculated
  *
- * "bonus"  from the json sequence file is interpretted as the number
- * of random flashes that should occur during the sequence.  The sign of
- * the "bonus" value indicates whether the flash should be 255 (bright),
- * or 0 (dark).
+ * "bonus"  from the json sequence file is itself a little json string
+ * that indicates as "count" the number of flickers and ["flicker"]["r"], ["g"] and ["b"],
+ * the color of the flicker (could be 0, 0, 0 for dark or 255, 255, 255 for bright, for example).
+ * the ["flicker"]["t"] might be used someday for the duration of the flicker,
+ * especially for very long running fades.
  */
 static int32_t slowp_idx = 0;  // counting through the NEO_SLOWP_POINTS
 static int8_t slowp_dir = 1;  // +1 -1 to indicate the direction we're traveling
@@ -451,7 +484,6 @@ static float delta_r, delta_g, delta_b;  // calculated increment for each color 
 static float slowp_r, slowp_g, slowp_b;  // remember where we are in the sequence
 static int16_t slowp_flickers[NEO_SLOWP_FLICKERS];  // random points to flicker
 static int16_t slowp_flicker_idx = 0;
-static int8_t flicker_dir = 0;  // flicker bright or dark
 static int8_t flicker_count = 0;  // how many flickers
 static uint8_t flicker_r, flicker_g, flicker_b;  // colors to flicker to
 
@@ -514,7 +546,6 @@ void neo_slowp_start(bool clear)  {
    */
   if(strlen(neo_sequences[seq_index].bonus) > 0)  {
     DEBUG_DEBUG("neo_slowp_start: bonus = %s\n", neo_sequences[seq_index].bonus);
-//    flicker_count = atoi(neo_sequences[seq_index].bonus);
 
     err = deserializeJson(jsonDoc, neo_sequences[seq_index].bonus);
 
@@ -547,18 +578,8 @@ void neo_slowp_start(bool clear)  {
 
 
     if(abs(flicker_count) > NEO_SLOWP_FLICKERS) flicker_count = NEO_SLOWP_FLICKERS;  //boundary check
+    flicker_count = abs(flicker_count);  // legacy
 
-    /*
-     * set the direction that the flicker brightness will take
-     */
-    if     (flicker_count > 0)  flicker_dir = 1;
-    else if(flicker_count < 0)  flicker_dir = -1;
-    else                        flicker_dir = 0;
-
-    /*
-     * we'll use flicker_count and flicker_dir separately from here
-     */
-    flicker_count = abs(flicker_count);
   }
   randomSeed(analogRead(0));  // different each time through
   for(uint8_t j = 0; j < flicker_count; j++)  {
