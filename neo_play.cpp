@@ -204,16 +204,15 @@ int8_t neo_load_sequence(const char *file)  {
         JsonArray points = jsonDoc["points"].as<JsonArray>();
         const char *label, *bonus;
         label = jsonDoc["label"];
-        bonus = jsonDoc["bonus"];
-#ifdef NEWSTUFF
-        // reserialize the bonus object for later deserialization
-        serializeJson(jsonDoc["bonus"], bonus);
-#endif
+//        bonus = jsonDoc["bonus"];
+
         DEBUG_INFO("For sequence \"%s\" : \n", label);
-        DEBUG_INFO("   \"bonus\": %s\n", bonus);
+//        DEBUG_INFO("   \"bonus\": %s\n", bonus);
+
+        /*
+         * find the place in neo_sequences[] where the file contents should be copied/stored
+         */
         int8_t seq_idx = neo_find_sequence(label);
-
-
 
         /*
         * iterate over the points in the array
@@ -233,7 +232,13 @@ int8_t neo_load_sequence(const char *file)  {
         * TODO: super-verbose for now for debugging
         */
         else  {
-          strncpy(neo_sequences[seq_idx].bonus, bonus, strlen(bonus));
+          /*
+           * reserialize the bonus object for later deserialization
+           * (may be interpretted differently buy eash strategy)
+           */
+          serializeJson(jsonDoc["bonus"], neo_sequences[seq_idx].bonus);
+
+//          strncpy(neo_sequences[seq_idx].bonus, bonus, strlen(bonus));
 
           uint16_t i = 0;
           for(JsonObject obj : points)  {
@@ -448,6 +453,7 @@ static int16_t slowp_flickers[NEO_SLOWP_FLICKERS];  // random points to flicker
 static int16_t slowp_flicker_idx = 0;
 static int8_t flicker_dir = 0;  // flicker bright or dark
 static int8_t flicker_count = 0;  // how many flickers
+static uint8_t flicker_r, flicker_g, flicker_b;  // colors to flicker to
 
 /*
  * Comparison function for qsort (seems that there's an "int" somewhere
@@ -508,9 +514,8 @@ void neo_slowp_start(bool clear)  {
    */
   if(strlen(neo_sequences[seq_index].bonus) > 0)  {
     DEBUG_DEBUG("neo_slowp_start: bonus = %s\n", neo_sequences[seq_index].bonus);
-    flicker_count = atoi(neo_sequences[seq_index].bonus);
+//    flicker_count = atoi(neo_sequences[seq_index].bonus);
 
-#ifdef NEW_STUFF
     err = deserializeJson(jsonDoc, neo_sequences[seq_index].bonus);
 
     if(err)  {
@@ -519,15 +524,27 @@ void neo_slowp_start(bool clear)  {
     }
     else  {
       if(jsonDoc["count"].isNull())  {
-        DEBUG_ERROR("ERROR: slowp bonus has no member \"count\" ... using zero\n");
+        DEBUG_ERROR("WARNING: slowp bonus has no member \"count\" ... using zero\n");
         flicker_count = 0;
       }
       else  {
         jbuf = jsonDoc["count"];
         flicker_count = atoi(jbuf);
       }
+
+      flicker_r = flicker_g = flicker_b = 255;
+      if( (jsonDoc["flicker"]["r"].isNull() == false) &&
+          (jsonDoc["flicker"]["g"].isNull() == false) &&
+          (jsonDoc["flicker"]["r"].isNull() == false)) {
+        flicker_r = neo_check_range(jsonDoc["flicker"]["r"]);
+        flicker_g = neo_check_range(jsonDoc["flicker"]["g"]);
+        flicker_b = neo_check_range(jsonDoc["flicker"]["b"]);
+        DEBUG_INFO("Setting slowp rgb color to (%d %d %d)\n", flicker_r, flicker_g, flicker_b);
+      }
+      else
+        DEBUG_ERROR("WARNING: slowp bonus has incomplete member \"flicker\" ... using white\n");
     }
-  #endif
+
 
     if(abs(flicker_count) > NEO_SLOWP_FLICKERS) flicker_count = NEO_SLOWP_FLICKERS;  //boundary check
 
@@ -649,10 +666,9 @@ void neo_slowp_write(void) {
   }
   else  {
     if(slowp_idx == slowp_flickers[slowp_flicker_idx])  {
-      if(flicker_dir > 0)
-        r = g = b = NEO_FLICKER_MAX;
-      else
-        r = g = b = NEO_FLICKER_MIN;
+        r = flicker_r;
+        g = flicker_g;
+        b = flicker_b;
 
       if(slowp_dir > 0)  {
         if(++slowp_flicker_idx >= flicker_count)
