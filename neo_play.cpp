@@ -425,7 +425,7 @@ void neo_single_start(bool clear) {
       }
       else  {
         jbuf = jsonDoc["count"];
-        single_repeats = atoi(jbuf);
+        if((single_repeats = atoi(jbuf)) > INT8_MAX) single_repeats = INT8_MAX;
         DEBUG_DEBUG("neo_single_start: single_repeats set to %d\n", single_repeats);
       }
     }
@@ -559,7 +559,7 @@ void neo_slowp_start(bool clear)  {
       }
       else  {
         jbuf = jsonDoc["count"];
-        flicker_count = atoi(jbuf);
+        if((flicker_count = atoi(jbuf)) > INT8_MAX) flicker_count = INT8_MAX;
       }
 
       flicker_r = flicker_g = flicker_b = 255;
@@ -752,13 +752,43 @@ void neo_slowp_wait(void)  {
  *  slowp_dir : going up or down the strand (pinging or ponging)
  */
 uint16_t p_num_pixels = 0;  // will use this shortcut alot
+int16_t pong_repeats = -1;
 void neo_pong_start(bool clear)  {
 
   slowp_idx = 0;
   slowp_dir = 1;  // start by going up
 
-  p_num_pixels = pixels->numPixels();
+  JsonDocument jsonDoc;
+  DeserializationError err;
+  const char *jbuf;  // jsonDoc[] requires this type
 
+  pong_repeats = -1; // start with continuous
+
+  /*
+   * obtain the number of times the sequence will be run
+   * based on the "bonus" parameter from the json sequence file
+   */
+  if(strlen(neo_sequences[seq_index].bonus) > 0)  {
+    DEBUG_DEBUG("neo_pong_start: bonus = %s\n", neo_sequences[seq_index].bonus);
+
+    err = deserializeJson(jsonDoc, neo_sequences[seq_index].bonus);
+
+    if(err)  {
+      DEBUG_ERROR("ERROR: Deserialization of bonus failed ... using zero\n");
+    }
+    else  {
+      if(jsonDoc["count"].isNull())  {
+        DEBUG_ERROR("WARNING: pong bonus has no member \"count\" ... using inf.\n");
+      }
+      else  {
+        jbuf = jsonDoc["count"];
+        if((pong_repeats = atoi(jbuf)) > INT16_MAX) pong_repeats = INT16_MAX;
+        DEBUG_DEBUG("neo_pong_start: pong_repeats set to %d\n", pong_repeats);
+      }
+    }
+  }
+
+  p_num_pixels = pixels->numPixels();
 
   /*
    * calculate delta time in mS based on the first
@@ -845,6 +875,9 @@ void neo_pong_write(void) {
       slowp_r = neo_sequences[seq_index].point[0].red;
       slowp_g = neo_sequences[seq_index].point[0].green;
       slowp_b = neo_sequences[seq_index].point[0].blue;
+
+      if(pong_repeats > (int16_t)0)
+        pong_repeats--;
     }
   }
 
@@ -857,7 +890,12 @@ void neo_pong_write(void) {
                                                   neo_check_range(slowp_b)));  // turn on the next one
   pixels->show();   // Send the updated pixel colors to the hardware.
 
-  neo_state = NEO_SEQ_WAIT;
+  if(pong_repeats == (int16_t)(-1))  // not counting keep going
+    neo_state = NEO_SEQ_WAIT;
+  else if (pong_repeats > 0)         // counting and still have some repeats to go
+    neo_state = NEO_SEQ_WAIT;
+  else                               // counting and done
+    neo_state = NEO_SEQ_STOPPING;
 }
 
 // end of SEQ_STRAT_PONG
