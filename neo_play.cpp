@@ -278,9 +278,8 @@ void neo_write_pixel(bool clear)  {
     pixels->setPixelColor(i, pixels->Color( neo_sequences[seq_index].point[current_index].red, 
                                           neo_sequences[seq_index].point[current_index].green,
                                           neo_sequences[seq_index].point[current_index].blue));
-
-  pixels->show();   // Send the updated pixel colors to the hardware.
   }
+  pixels->show();   // Send the updated pixel colors to the hardware.
 }
 
 /*
@@ -299,13 +298,15 @@ void neo_n_blinks(uint8_t r, uint8_t g, uint8_t b, int8_t reps, int32_t t)  {
     /*
     * send the next point in the sequence to the strand
     */
-    for(int i=0; i < pixels->numPixels(); i++) { // For each pixel...
+    for(int i=0; i < pixels->numPixels(); i++) // For each pixel...
       pixels->setPixelColor(i, color);
-      pixels->show();   // Send the updated pixel colors to the hardware.
-    }
+    pixels->show();   // Send the updated pixel colors to the hardware.
+
     delay(t);
+
     pixels->clear();
     pixels->show();
+    
     delay(t);
   }
 }
