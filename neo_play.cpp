@@ -275,9 +275,9 @@ void neo_write_pixel(bool clear)  {
     * send the next point in the sequence to the strand
     */
   for(int i=0; i < pixels->numPixels(); i++) { // For each pixel...
-    pixels->setPixelColor(i, pixels->Color( neo_sequences[seq_index].point[current_index].red, 
-                                          neo_sequences[seq_index].point[current_index].green,
-                                          neo_sequences[seq_index].point[current_index].blue));
+    pixels->setPixelColor(i, pixels->gamma32(pixels->Color( neo_sequences[seq_index].point[current_index].red, 
+                                                            neo_sequences[seq_index].point[current_index].green,
+                                                            neo_sequences[seq_index].point[current_index].blue)));
   }
   pixels->show();   // Send the updated pixel colors to the hardware.
 }
@@ -818,9 +818,9 @@ void neo_pong_start(bool clear)  {
    * clear and set the first point here
    */
   pixels->clear();
-  pixels->setPixelColor(slowp_idx, pixels->Color( neo_check_range(slowp_r),
-                                                  neo_check_range(slowp_g),
-                                                  neo_check_range(slowp_b)));  // turn on the next one
+  pixels->setPixelColor(slowp_idx, pixels->gamma32(pixels->Color( neo_check_range(slowp_r),
+                                                                  neo_check_range(slowp_g),
+                                                                  neo_check_range(slowp_b))));  // turn on the next one
   pixels->show();
 
   current_millis = millis();
@@ -886,9 +886,9 @@ void neo_pong_write(void) {
    * send the next point in the sequence to the strand
    */
   pixels->clear();  // first turn them all off
-  pixels->setPixelColor(slowp_idx, pixels->Color( neo_check_range(slowp_r),
-                                                  neo_check_range(slowp_g),
-                                                  neo_check_range(slowp_b)));  // turn on the next one
+  pixels->setPixelColor(slowp_idx, pixels->gamma32(pixels->Color( neo_check_range(slowp_r),
+                                                                  neo_check_range(slowp_g),
+                                                                  neo_check_range(slowp_b))));  // turn on the next one
   pixels->show();   // Send the updated pixel colors to the hardware.
 
   if(pong_repeats == (int16_t)(-1))  // not counting keep going
