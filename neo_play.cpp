@@ -618,7 +618,7 @@ void neo_slowp_start(bool clear)  {
    */
   pixels->clear();
   for(int i=0; i < pixels->numPixels(); i++)  // For each pixel...
-      pixels->setPixelColor(i, pixels->Color(r, g, b));
+      pixels->setPixelColor(i, pixels->gamma32(pixels->Color(r, g, b)));
   pixels->show();   // Send the updated pixel colors to the hardware.
 
   current_millis = millis();
@@ -709,7 +709,7 @@ void neo_slowp_write(void) {
     }
   }
   for(int i=0; i < pixels->numPixels(); i++)  // For each pixel...
-      pixels->setPixelColor(i, pixels->Color(r, g, b));
+      pixels->setPixelColor(i, pixels->gamma32(pixels->Color(r, g, b)));
 
   pixels->show();   // Send the updated pixel colors to the hardware.
 
