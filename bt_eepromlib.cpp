@@ -57,7 +57,7 @@ struct eeprom_in  {
 /*
  * NOTE: validation must be at index = 0
  */
-#define EEPROM_ITEMS 10
+#define EEPROM_ITEMS 11
 struct eeprom_in eeprom_input[EEPROM_ITEMS] {
   {"",                                           "Validation",    "",                                       mon_config.valid,            sizeof(mon_config.valid)},
   {"DHCP Enable (true, false)",                  "WIFI DHCP",     "false",                                  mon_config.dhcp_enable,      sizeof(mon_config.dhcp_enable)},
@@ -68,6 +68,7 @@ struct eeprom_in eeprom_input[EEPROM_ITEMS] {
   {"Enter GMT offset (POSIX string)",            "GMT offset",    "CST6CDT,M3.2.0/2:00:00,M11.1.0/2:00:00", mon_config.tz_offset_gmt,    sizeof(mon_config.tz_offset_gmt)},
   {"Enter debug level (-1(none) -> 4(verbose))", "debug level",   "4",                                      mon_config.debug_level,      sizeof(mon_config.debug_level)},
   {"Enter # of neopixels",                       "# neopixel",    "24",                                     mon_config.neocount,         sizeof(mon_config.neocount)},
+  {"Neopixel gamma (true, false)",               "neo gamma",     "true",                                   mon_config.neogamma,         sizeof(mon_config.neogamma)},
   {"Enter default seq label (or \"none\")",      "def neo seq",   "none",                                   mon_config.neodefault,       sizeof(mon_config.neodefault)},
 };
 
@@ -90,7 +91,8 @@ void init_eeprom_input()  {
     eeprom_input[6].value = mon_config.tz_offset_gmt;
     eeprom_input[7].value = mon_config.debug_level;
     eeprom_input[8].value = mon_config.neocount;
-    eeprom_input[9].value = mon_config.neodefault;
+    eeprom_input[8].value = mon_config.neogamma;
+    eeprom_input[10].value = mon_config.neodefault;
 }
 
 /*

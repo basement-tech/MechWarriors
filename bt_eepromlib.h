@@ -31,7 +31,7 @@
  * be sure to update this string if you change the 
  * net_config struct below.
  */
-#define EEPROM_VALID  "valid_v0.6.10"
+#define EEPROM_VALID  "valid_v0.6.11"
 
 /*
  * map of the parameters stored in EEPROM
@@ -49,6 +49,7 @@ char wifitries[8];       // wifi connection attempts
 char tz_offset_gmt[64];  // POSIX standard time zone string
 char debug_level[4];     // display messages at different levels of detail (-1 to n)
 char neocount[8];        // number of neopixels in the strand
+char neogamma[8];        // gamma correction or not
 char neodefault[16];     // label of the sequence to load at start
 };
  

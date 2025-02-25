@@ -802,6 +802,12 @@ void setup(void) {
   else
     neo_init(NEO_NUMPIXELS, NEO_PIN, NEO_TYPE);
 
+  DEBUG_INFO("Setting gamma correction to %s\n", pmon_config->neogamma);
+  if(strcmp(pmon_config->neogamma, "true") == 0)
+    neo_set_gamma_color(true);
+  else
+    neo_set_gamma_color(false);
+
   /*
    * give a visual indicator of WiFi connection status
    */
