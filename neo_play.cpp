@@ -266,6 +266,30 @@ int8_t neo_load_sequence(const char *file)  {
 }
 
 /*
+ * convert r, g, b to Adafruit color with/without gamma32()
+ * based on eeprom configuration parameter.
+ * this is called once in setup() to set a function pointer
+ * for efficient operation
+ */
+uint32_t (*neo_convert_color)(uint8_t r, uint8_t g, uint8_t b);
+
+uint32_t neo_color_gamma(uint8_t r, uint8_t g, uint8_t b)  {
+  return pixels->gamma32(pixels->Color(r, g, b));
+}
+uint32_t neo_color_nogamma(uint8_t r, uint8_t g, uint8_t b)  {
+    return (pixels->Color(r, g, b));
+}
+
+void neo_set_gamma_color(bool gamma_enable)  {
+  if(gamma_enable)
+    neo_convert_color = neo_color_gamma;
+  else
+    neo_convert_color = neo_color_nogamma;
+}
+
+
+
+/*
  * helper for writing a single color to all pixels
  */
 void neo_write_pixel(bool clear)  {
