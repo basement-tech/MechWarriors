@@ -299,6 +299,9 @@ void handleSysInfo() {
   result += "  \"freeHeap\": " + String(ESP.getFreeHeap()) + ",\n";
   result += "  \"fsTotalBytes\": " + String(fs_info.totalBytes) + ",\n";
   result += "  \"fsUsedBytes\": " + String(fs_info.usedBytes) + ",\n";
+  result += "  \"Chip ID\": " + String(ESP.getChipId()) + ",\n";
+  result += "  \"CPU Frequency\": " + String(ESP.getCpuFreqMHz()) + "MHz" + ",\n";
+  result += "  \"firmware version\": " + String(EEPROM_VALID) + ",\n";
   result += "}";
 
   server.sendHeader("Cache-Control", "no-cache");
