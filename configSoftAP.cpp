@@ -1,6 +1,8 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
+#include <ArduinoJson.h>
+#include <Arduino_DebugUtils.h>
 
 #include "configSoftAP.h"
 
@@ -8,21 +10,39 @@
 ESP8266WebServer ap_server(80);  // Web server on port 80
 DNSServer dnsServer;           // DNS server for redirection
 
-static const char getssidContent[] PROGMEM = R"==(
+static const char getConfigContent[] PROGMEM = R"==(
   <script>
-    function wifiCredentials(event) {
+    function deviceConfig(event) {
       event.preventDefault();
       var ssid = document.getElementById('ssid').value;
       var password = document.getElementById('password').value;
       var dhcp = document.getElementById('dhcp').value;
 
-      console.log("SSID: " + ssid);
-      console.log("Password: " + password);
-      console.log("DHCP: " + dhcp);
+      let config_data = {
+        ssid: String(document.getElementById('ssid').value),
+        password: String(document.getElementById('password').value),
+        dhcp: String(document.getElementById('dhcp').value)
+      }
+      let jsonData = JSON.stringify(config_data);
+      console.log(jsonData);
+
+      fetch('api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: jsonData
+      })
+      .then(response => {
+        if(response.status != 200) {
+          window.alert("Error processing configuration");
+        }
+        return response.text();
+      })
+      .then(result => console.log(result))
+      .catch(error => console.error('Error:', error));
     }
   </script>
-  <form onsubmit="wifiCredentials(event)">
-    <label for="credentials">Enter WiFi Credentials:</label>
+  <form onsubmit="deviceConfig(event)">
+    <label for="configuration">Enter Device Configuration:</label>
     <br>
     <input type="text" id="ssid" name="ssid" placeholder="<ssid>"><br><br>
     <input type="text" id="password" name="password" placeholder="<password>)"><br><br>
@@ -32,13 +52,30 @@ static const char getssidContent[] PROGMEM = R"==(
 )==";
 
 
-void handleRoot() {
-  ap_server.send(200, "text/html", getssidContent);
+void handleRoot(void) {
+  ap_server.send(200, "text/html", getConfigContent);
 }
 
-void handleNotFound() {
+void handleNotFound(void) {
   ap_server.sendHeader("Location", String("http://192.168.4.1/"), true);
   ap_server.send(302, "text/plain", "");
+}
+
+void handleSubmit(void)  {
+  char buf[128];
+  JsonDocument jsonDoc;
+  DeserializationError err;
+
+  if(ap_server.method() == HTTP_POST)  {
+    /*
+     * get the value of the button pressed
+     */
+    String body = ap_server.arg("plain");
+    DEBUG_DEBUG("Config Form Received: ");
+    body.toCharArray(buf, sizeof(buf));
+    DEBUG_DEBUG("return buffer <%s>\n", buf);
+    ap_server.send(200, "text/html", "Submit Pressed");
+  }
 }
 
 void configSoftAP(void) {
@@ -68,6 +105,7 @@ void configSoftAP(void) {
   // Define web server routes
   ap_server.on("/", handleRoot);
   ap_server.onNotFound(handleNotFound);
+  ap_server.on("/api/config", HTTP_POST, handleSubmit);
 
   // Start web server
   ap_server.begin();
