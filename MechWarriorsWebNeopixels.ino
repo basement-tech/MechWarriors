@@ -19,7 +19,19 @@
  * - Adafruit NeoPixel by Adafruit v1.12.3
  * - ArduinoOTA by Arduino, Juraj Andrasy v1.1.0
  * - Arduino_DebugUtils by Arduino v1.4.0
- * - webserver came as an example with esp8266 board packate
+ * - webserver came as an example with esp8266 board package
+ *
+ * Default Pin Assignments(see app_pins.h):
+ * Pin      Function                #define 
+ * 0        BOOT REQ                reserved
+ * 2       OB Blue LED              reserved
+ * 4        i2C SDA                 future - not yet implemented
+ * 5        i2c SCL                 future - not yet implemented
+ * 12        configure
+ * 13        UNUSED
+ * 14        UNUSED
+ * 15       neo data                NEO_PIN 
+ * 16        UNUSED
  * 
  *
  * Some notes regarding how the webserver works 
@@ -112,8 +124,10 @@
  *
  *
  * TODO (x = done):
- * o slowp: add r, g, b to bonus string to set flicker up
- * o do I need to add something to get the esp8266 to remember the last successful WiFi connection ?
+ * o figure out why the ntp/time stuff doesn't work
+ * x slowp: add r, g, b to bonus string to set flicker up
+ * x do I need to add something to get the esp8266 to remember the last successful WiFi connection ?
+ *   - apparently not
  * o allow use of sequences based on user files as default
  * x change fallback wifi credentials on initial failure ?
  *   - set secrets.h to guest (done)
@@ -187,6 +201,8 @@
 
 #include "bt_eepromlib.h"
 #include "neo_data.h"  // for neopixels
+#include "app_pins.h"
+#include "configSoftAP.h"
 
 // mark parameters not used in example
 #define UNUSED __attribute__((unused))
@@ -202,10 +218,6 @@
 
 // get access to the eeprom based configuration structure
 net_config *pmon_config = get_mon_config_ptr();
-
-// define pin for debugging
-//#define DEBUG_PIN 16
-#define DEBUG_PIN -1  // pin not initialized
 
 #ifdef CONFIG_SERVER
 /*
@@ -562,6 +574,7 @@ void setup(void) {
   Debug.setDebugLevel(DBG_VERBOSE);  // bootstrap here; set when eeprom is connected
   Debug.newlineOff();
 
+
   /*
    * initialize the EEPROM for basic bootstrapping of application
    * (e.g. wifi credentials)
@@ -569,6 +582,19 @@ void setup(void) {
    * NOTE: don't use the Arduino debug library for this part
    */
   eeprom_begin();
+
+
+  /*
+   * if the config physical button was pressed on power-up,
+   * instantiate and start the local soft AP to facilitate configuration
+   * from the captive page.  The esp is reset when this function exits.
+   */
+  pinMode(PIN_CONFIG, INPUT_PULLUP);
+  delay(1000);  // seems to be required to set it get to true before reading
+  Serial.println("Press config physical button to start configuration SoftAP");
+  if(digitalRead(PIN_CONFIG) == 0)
+    configSoftAP();
+
   
   Serial.println();
   Serial.println(EEPROM_INTRO_MSG);

@@ -11,6 +11,7 @@
 #include <ArduinoJson.h>
 
 #include "neo_data.h"
+#include "app_pins.h"
 
 // TRACE output simplified, can be deactivated here ... switched to arduino debug library
 //#define TRACE(...) Serial.printf(__VA_ARGS__)

@@ -90,7 +90,7 @@ typedef struct {
  * describes the hardware configuration of the neopixel strip
  */
 #define NEO_NUMPIXELS 10
-#define NEO_PIN 15
+//#define NEO_PIN 15  // moved to application pins file
 #define NEO_TYPE NEO_GRB+NEO_KHZ800
 
 /*
