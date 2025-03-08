@@ -59,6 +59,9 @@
  *
  * Some major discoveries:
  *
+ * DEBUG_DEBUG() and similar have an upper limit of the size of the
+ * string that they can display ... something like 2-3K bytes.
+ *
  * How to get a value from an htlm button to a c language callback ?
  * major learning: existence of server.arg("plain")
 
@@ -573,6 +576,7 @@ void setup(void) {
    */
   Debug.setDebugLevel(DBG_VERBOSE);  // bootstrap here; set when eeprom is connected
   Debug.newlineOff();
+  int debug_level = DBG_VERBOSE;  // for eeprom read
 
 
   /*
@@ -582,6 +586,10 @@ void setup(void) {
    * NOTE: don't use the Arduino debug library for this part
    */
   eeprom_begin();
+
+  DEBUG_INFO("Mounting the filesystem...\n");
+  if (!LittleFS.begin())
+    DEBUG_ERROR("ERROR: Could not mount the filesystem...\n");
 
 
   /*
@@ -627,7 +635,6 @@ void setup(void) {
    * once all of the eeprom setup is done,
    * set the debug level (see above for other comments)
    */
-  int debug_level = DBG_VERBOSE;
   debug_level = atoi(pmon_config->debug_level);
   if(debug_level < -1) debug_level = DBG_NONE;
   if(debug_level > 4)  debug_level = DBG_VERBOSE;
@@ -636,12 +643,7 @@ void setup(void) {
 
   DEBUG_INFO("Starting WebServer ...\n");
 
-  DEBUG_INFO("Mounting the filesystem...\n");
-  if (!LittleFS.begin()) {
-    DEBUG_ERROR("ERROR: Could not mount the filesystem...\n");
-    delay(2000);
-    ESP.restart();
-  }
+
 
   /*
    * setup wifi to use a fixed IP address

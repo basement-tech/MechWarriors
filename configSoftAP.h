@@ -7,6 +7,8 @@
 #define AP_GATEWAY   192, 168, 4, 1         // Gateway
 #define AP_SUBNET    255, 255, 255, 0       // Subnet Mask
 
+#define AP_JS_NAME   "config.html"          // file containing configuration page (mostly) javascript
+
 void configSoftAP(void);
 
 #define __CONFIGSOFTAP_H__

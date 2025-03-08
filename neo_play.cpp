@@ -205,10 +205,8 @@ int8_t neo_load_sequence(const char *file)  {
         JsonArray points = jsonDoc["points"].as<JsonArray>();
         const char *label, *bonus;
         label = jsonDoc["label"];
-//        bonus = jsonDoc["bonus"];
 
         DEBUG_INFO("For sequence \"%s\" : \n", label);
-//        DEBUG_INFO("   \"bonus\": %s\n", bonus);
 
         /*
          * find the place in neo_sequences[] where the file contents should be copied/stored
@@ -238,8 +236,6 @@ int8_t neo_load_sequence(const char *file)  {
            * (may be interpretted differently buy eash strategy)
            */
           serializeJson(jsonDoc["bonus"], neo_sequences[seq_idx].bonus);
-
-//          strncpy(neo_sequences[seq_idx].bonus, bonus, strlen(bonus));
 
           uint16_t i = 0;
           for(JsonObject obj : points)  {

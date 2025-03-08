@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+    <br>
+    Enter new configuration values and press Submit to save, Cancel to leave unchanged
+    <br>
+    <head>
+        <title>Neo Configuration</title>
+    </head>
+    <script>
+        function deviceConfig(event) {
+            event.preventDefault();
+
+            let config_data = {
+                action: String("save"),
+                ssid: String(document.getElementById('WIFI_SSID').value),
+                password: String(document.getElementById('WIFI_Password').value),
+                dhcp: String(document.getElementById('WIFI_DHCP').value)
+            }
+            let jsonData = JSON.stringify(config_data);
+            console.log(jsonData);
+
+            fetch('api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: jsonData
+            })
+            .then(response => {
+                if(response.status != 200) {
+                window.alert("Error processing configuration");
+                }
+                return response.text();
+            })
+            .then(result => console.log(result))
+            .catch(error => console.error('Error:', error));
+        }
+
+        function handleCancel()  {
+            console.log("action cancelled");
+            event.preventDefault();
+
+            let config_data = {
+                action: String("cancel"),
+            }
+            let jsonData = JSON.stringify(config_data);
+            console.log(jsonData);
+
+            fetch('api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: jsonData
+            })
+            .then(response => {
+                if(response.status != 200) {
+                window.alert("Error processing configuration");
+                }
+                return response.text();
+            })
+            .then(result => console.log(result))
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+<!--
+Note: the final </html> is added by the c code after
+the bottom of the page is dynamically generated.
+-->
