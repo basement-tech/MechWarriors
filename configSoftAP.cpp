@@ -14,6 +14,9 @@ DNSServer dnsServer;           // DNS server for redirection
 static char getConfigContent[GET_CONFIG_BUF_SIZE];  // to consolidate captive page contents
 
 static char getConfigContent_js[] PROGMEM = R"==(
+  <br>
+  <title>Enter new configuration values and press <Submit> to save; <Cancel> to leave unchanged</title>
+  <br>
   <script>
     function deviceConfig(event) {
       event.preventDefault();
@@ -22,6 +25,7 @@ static char getConfigContent_js[] PROGMEM = R"==(
       var dhcp = document.getElementById('WIFI_DHCP').value;
 
       let config_data = {
+        action: String("save"),
         ssid: String(document.getElementById('WIFI_SSID').value),
         password: String(document.getElementById('WIFI_Password').value),
         dhcp: String(document.getElementById('WIFI_DHCP').value)
@@ -42,6 +46,10 @@ static char getConfigContent_js[] PROGMEM = R"==(
       })
       .then(result => console.log(result))
       .catch(error => console.error('Error:', error));
+    }
+
+    function handleCancel()  {
+      console.log("action cancelled");
     }
   </script>
 )==";
@@ -75,7 +83,7 @@ void handleSubmit(void)  {
     DEBUG_DEBUG("Config Form Received: ");
     body.toCharArray(buf, sizeof(buf));
     DEBUG_DEBUG("return buffer <%s>\n", buf);
-    ap_server.send(200, "text/html", "Submit Pressed");
+    ap_server.send(200, "text/html", "From C callback handleSubmit(): Submit Pressed");
   }
 }
 
@@ -123,7 +131,6 @@ void configSoftAP(void) {
    * NOTE: tried to do this in the root callback and it kept core dumping ...
    */
   strncpy(getConfigContent, getConfigContent_js, GET_CONFIG_BUF_SIZE);
-  DEBUG_DEBUG("getConfigContent before html:\n%s\n", getConfigContent);
   createHTMLfromEEPROM((char *)(getConfigContent+strlen(getConfigContent)), GET_CONFIG_BUF_SIZE-strlen(getConfigContent));
   DEBUG_DEBUG("getConfigContent after html:\n%s\n", getConfigContent);
 
