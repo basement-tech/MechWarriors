@@ -15,8 +15,9 @@ static char getConfigContent[GET_CONFIG_BUF_SIZE];  // to consolidate captive pa
 
 static char getConfigContent_js[] PROGMEM = R"==(
   <br>
-  <title>Enter new configuration values and press <Submit> to save; <Cancel> to leave unchanged</title>
+  Enter new configuration values and press Submit to save, Cancel to leave unchanged
   <br>
+  <title>Neo Configuration</title>
   <script>
     function deviceConfig(event) {
       event.preventDefault();
