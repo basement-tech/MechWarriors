@@ -10,19 +10,21 @@
 
 ESP8266WebServer ap_server(80);  // Web server on port 80
 DNSServer dnsServer;           // DNS server for redirection
+#define GET_CONFIG_BUF_SIZE 4096
+static char getConfigContent[GET_CONFIG_BUF_SIZE];  // to consolidate captive page contents
 
-static const char getConfigContent[] PROGMEM = R"==(
+static char getConfigContent_js[] PROGMEM = R"==(
   <script>
     function deviceConfig(event) {
       event.preventDefault();
-      var ssid = document.getElementById('ssid').value;
-      var password = document.getElementById('password').value;
-      var dhcp = document.getElementById('dhcp').value;
+      var ssid = document.getElementById('WIFI_SSID').value;
+      var password = document.getElementById('WIFI_Password').value;
+      var dhcp = document.getElementById('WIFI_DHCP').value;
 
       let config_data = {
-        ssid: String(document.getElementById('ssid').value),
-        password: String(document.getElementById('password').value),
-        dhcp: String(document.getElementById('dhcp').value)
+        ssid: String(document.getElementById('WIFI_SSID').value),
+        password: String(document.getElementById('WIFI_Password').value),
+        dhcp: String(document.getElementById('WIFI_DHCP').value)
       }
       let jsonData = JSON.stringify(config_data);
       console.log(jsonData);
@@ -42,19 +44,15 @@ static const char getConfigContent[] PROGMEM = R"==(
       .catch(error => console.error('Error:', error));
     }
   </script>
-  <form onsubmit="deviceConfig(event)">
-    <label for="configuration">Enter Device Configuration:</label>
-    <br>
-    <input type="text" id="ssid" name="ssid" placeholder="<ssid>"><br><br>
-    <input type="text" id="password" name="password" placeholder="<password>)"><br><br>
-    <input type="text" id="dhcp" name="dhcp" placeholder="DHCP(yes or no)"><br><br>
-    <button type="submit">Submit</button>
-  </form>
 )==";
 
 
 
-
+/*
+ * this function is only executed when the device is being configured.
+ * so, not worrying about PROGMEM for html/js and hoping the buffer get
+ * reused.
+ */
 void handleRoot(void) {
   ap_server.send(200, "text/html", getConfigContent);
 }
@@ -80,6 +78,7 @@ void handleSubmit(void)  {
     ap_server.send(200, "text/html", "Submit Pressed");
   }
 }
+
 
 void configSoftAP(void) {
 
@@ -117,9 +116,18 @@ void configSoftAP(void) {
   Serial.print("Free Heap Before SoftAP Cleanup: ");
   Serial.println(ESP.getFreeHeap());  
 
-  Serial.println("Press any key to close server");
+  /*
+   * add the dynamically created, using current eeprom settings, html portion of the response,
+   * to the buffer containing the javascript portion from above.
+   * take care not to overrun the buffer
+   * NOTE: tried to do this in the root callback and it kept core dumping ...
+   */
+  strncpy(getConfigContent, getConfigContent_js, GET_CONFIG_BUF_SIZE);
+  DEBUG_DEBUG("getConfigContent before html:\n%s\n", getConfigContent);
+  createHTMLfromEEPROM((char *)(getConfigContent+strlen(getConfigContent)), GET_CONFIG_BUF_SIZE-strlen(getConfigContent));
+  DEBUG_DEBUG("getConfigContent after html:\n%s\n", getConfigContent);
 
-  createHTMLfromEEPROM();
+  Serial.println("Press any key to close server");
 
   while(Serial.available() == 0)  {
     dnsServer.processNextRequest();  // Handle DNS requests

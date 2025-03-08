@@ -60,16 +60,16 @@ struct eeprom_in  {
 #define EEPROM_ITEMS 11
 struct eeprom_in eeprom_input[EEPROM_ITEMS] {
   {"",                                           "Validation",    "",                                       mon_config.valid,            sizeof(mon_config.valid)},
-  {"DHCP Enable (true, false)",                  "WIFI DHCP",     "false",                                  mon_config.dhcp_enable,      sizeof(mon_config.dhcp_enable)},
-  {"Enter WIFI SSID",                            "WIFI SSID",     "my_ssid",                                mon_config.wlan_ssid,        sizeof(mon_config.wlan_ssid)},
-  {"Enter WIFI Password",                        "WIFI Password", "my_passwd",                              mon_config.wlan_pass,        sizeof(mon_config.wlan_pass)},
-  {"Enter Fixed IP Addr",                        "Fixed IP Addr", "192.168.1.37",                           mon_config.ipaddr,           sizeof(mon_config.ipaddr)},
-  {"WiFi timeout (# of 500 mS tries)",           "WIFI timeout",  "10",                                     mon_config.wifitries,        sizeof(mon_config.wifitries)},
-  {"Enter GMT offset (POSIX string)",            "GMT offset",    "CST6CDT,M3.2.0/2:00:00,M11.1.0/2:00:00", mon_config.tz_offset_gmt,    sizeof(mon_config.tz_offset_gmt)},
-  {"Enter debug level (-1(none) -> 4(verbose))", "debug level",   "4",                                      mon_config.debug_level,      sizeof(mon_config.debug_level)},
-  {"Enter # of neopixels",                       "# neopixel",    "24",                                     mon_config.neocount,         sizeof(mon_config.neocount)},
-  {"Neopixel gamma (true, false)",               "neo gamma",     "true",                                   mon_config.neogamma,         sizeof(mon_config.neogamma)},
-  {"Enter default seq label (or \"none\")",      "def neo seq",   "none",                                   mon_config.neodefault,       sizeof(mon_config.neodefault)},
+  {"DHCP Enable (true, false)",                  "WIFI_DHCP",     "false",                                  mon_config.dhcp_enable,      sizeof(mon_config.dhcp_enable)},
+  {"Enter WIFI SSID",                            "WIFI_SSID",     "my_ssid",                                mon_config.wlan_ssid,        sizeof(mon_config.wlan_ssid)},
+  {"Enter WIFI Password",                        "WIFI_Password", "my_passwd",                              mon_config.wlan_pass,        sizeof(mon_config.wlan_pass)},
+  {"Enter Fixed IP Addr",                        "Fixed_IP_Addr", "192.168.1.37",                           mon_config.ipaddr,           sizeof(mon_config.ipaddr)},
+  {"WiFi timeout (# of 500 mS tries)",           "WIFI_timeout",  "10",                                     mon_config.wifitries,        sizeof(mon_config.wifitries)},
+  {"Enter GMT offset (POSIX string)",            "GMT_offset",    "CST6CDT,M3.2.0/2:00:00,M11.1.0/2:00:00", mon_config.tz_offset_gmt,    sizeof(mon_config.tz_offset_gmt)},
+  {"Enter debug level (-1(none) -> 4(verbose))", "debug_level",   "4",                                      mon_config.debug_level,      sizeof(mon_config.debug_level)},
+  {"Enter # of neopixels",                       "npixel_cnt",    "24",                                     mon_config.neocount,         sizeof(mon_config.neocount)},
+  {"Neopixel gamma (true, false)",               "neo_gamma",     "true",                                   mon_config.neogamma,         sizeof(mon_config.neogamma)},
+  {"Enter default seq label (or \"none\")",      "def_neo_seq",   "none",                                   mon_config.neodefault,       sizeof(mon_config.neodefault)},
 };
 
 /*
@@ -465,9 +465,8 @@ int8_t eeprom_convert_ip(char *sipaddr, uint8_t octets[])  {
  * dynamically create the html form with default values from 
  * the current EEPROM values
  */
-void createHTMLfromEEPROM(void)  {
-  char buf[2048] = {0};  // accumulator
-  char *pbuf = buf;
+void createHTMLfromEEPROM(char *buf, int size)  {
+  buf[0] = '\0';
 
   if(eeprom_validation((char *)EEPROM_VALID) == 0)  {
     eeprom_get();  /* if the EEPROM is valid, get the whole contents */
@@ -481,18 +480,24 @@ void createHTMLfromEEPROM(void)  {
   /*
    * loop through creating the input elements of the html from the eeprom contents
    * start at 1 to skip the validation element
+   * initial total string length was 898
+   * note that strncpy() attempts to pad the full (n) bytes with '\0' and can overflow
    */
-  int bufsize = sizeof(buf);
+  int bufsize = size - 1;  // I think I have to save one for the final '\0'
+
+  strncpy((char*)(buf+strlen(buf)), "<form onsubmit=\"deviceConfig(event)\">\n", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
   for(int parm = 1; parm < EEPROM_ITEMS; parm++)  {
-        strncpy((char*)(buf+strlen(buf)), "<input type=\"text\" id=\"", bufsize-strlen(buf));
-        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, bufsize-strlen(buf));
-        strncpy((char*)(buf+strlen(buf)), "\" name=\"", bufsize-strlen(buf));
-        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, bufsize-strlen(buf));
-        strncpy((char*)(buf+strlen(buf)), "\" value=\"", bufsize-strlen(buf));
-        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].value, bufsize-strlen(buf));
-        strncpy((char*)(buf+strlen(buf)), "\"><br><br>\n", bufsize-strlen(buf));
+        strncpy((char*)(buf+strlen(buf)), "<input type=\"text\" id=\"", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), "\" name=\"", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), "\" value=\"", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].value, (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), "\"><br><br>\n", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
   }
-  buf[2047] = '\0';
+  strncpy((char*)(buf+strlen(buf)), "<button type=\"submit\">Submit</button>\n</form>\n", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+  buf[bufsize] = '\0';  // just in case ... note already reduced by one above
+
   Serial.print("html buf(len=");
   Serial.print(strlen(buf));
   Serial.print(") =\n");
