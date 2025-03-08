@@ -64,6 +64,7 @@ void dispall_eeprom_parms();
 bool eeprom_validation(char match[]);
 int l_read_string(char *buf, int blen, bool echo);
 int8_t eeprom_convert_ip(char *sipaddr, uint8_t octets[]);
+void createHTMLfromEEPROM(void);
 
 void eeprom_begin(void);
 void eeprom_get(void);

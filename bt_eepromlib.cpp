@@ -461,3 +461,42 @@ int8_t eeprom_convert_ip(char *sipaddr, uint8_t octets[])  {
   return(ret);
 }
 
+/*
+ * dynamically create the html form with default values from 
+ * the current EEPROM values
+ */
+void createHTMLfromEEPROM(void)  {
+  char buf[2048] = {0};  // accumulator
+  char *pbuf = buf;
+
+  if(eeprom_validation((char *)EEPROM_VALID) == 0)  {
+    eeprom_get();  /* if the EEPROM is valid, get the whole contents */
+    init_eeprom_input();
+  }
+  else  {
+    Serial.println("Notice: eeprom contents invalid or first time ... loading defaults");
+    set_eeprom_initial();
+  }
+
+  /*
+   * loop through creating the input elements of the html from the eeprom contents
+   * start at 1 to skip the validation element
+   */
+  int bufsize = sizeof(buf);
+  for(int parm = 1; parm < EEPROM_ITEMS; parm++)  {
+        strncpy((char*)(buf+strlen(buf)), "<input type=\"text\" id=\"", bufsize-strlen(buf));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, bufsize-strlen(buf));
+        strncpy((char*)(buf+strlen(buf)), "\" name=\"", bufsize-strlen(buf));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, bufsize-strlen(buf));
+        strncpy((char*)(buf+strlen(buf)), "\" value=\"", bufsize-strlen(buf));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].value, bufsize-strlen(buf));
+        strncpy((char*)(buf+strlen(buf)), "\"><br><br>\n", bufsize-strlen(buf));
+  }
+  buf[2047] = '\0';
+  Serial.print("html buf(len=");
+  Serial.print(strlen(buf));
+  Serial.print(") =\n");
+  Serial.println(buf);
+
+
+}

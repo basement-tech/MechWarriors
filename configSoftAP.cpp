@@ -4,6 +4,7 @@
 #include <ArduinoJson.h>
 #include <Arduino_DebugUtils.h>
 
+#include "bt_eepromlib.h"
 #include "configSoftAP.h"
 
 
@@ -50,6 +51,8 @@ static const char getConfigContent[] PROGMEM = R"==(
     <button type="submit">Submit</button>
   </form>
 )==";
+
+
 
 
 void handleRoot(void) {
@@ -115,6 +118,9 @@ void configSoftAP(void) {
   Serial.println(ESP.getFreeHeap());  
 
   Serial.println("Press any key to close server");
+
+  createHTMLfromEEPROM();
+
   while(Serial.available() == 0)  {
     dnsServer.processNextRequest();  // Handle DNS requests
     ap_server.handleClient();           // Handle web requests
