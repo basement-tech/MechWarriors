@@ -466,6 +466,12 @@ int8_t eeprom_convert_ip(char *sipaddr, uint8_t octets[])  {
 /*
  * dynamically create the html form with default values from 
  * the current EEPROM values
+ * if overflow occurs, the result is truncated.
+ *
+ * arguments:
+ *  buf -  character buffer to accumulate html/js
+ *         expected to have some contents (e.g. js) when passed
+ *  size - characters left in the buffer before overflow
  */
 void createHTMLfromEEPROM(char *buf, int size)  {
   buf[0] = '\0';
@@ -507,9 +513,16 @@ void createHTMLfromEEPROM(char *buf, int size)  {
   Serial.print(") =\n");
   Serial.println(buf);
 
-
 }
 
+/*
+ * copy the result from the browser based input (json),
+ * back to the local C structure.
+ *
+ * arguments:
+ *  jsonDoc - jsonDoc containing the json formatted return 
+ *    values from the browser based input
+ */
 void saveJsonToEEPROM(JsonDocument jsonDoc)  {
 
   for(int parm = 1; parm < EEPROM_ITEMS; parm++)  {
@@ -522,5 +535,5 @@ void saveJsonToEEPROM(JsonDocument jsonDoc)  {
     }
   }
 
-  //eeprom_put();
+  eeprom_put();  // write to physical eeprom/flash
 }
