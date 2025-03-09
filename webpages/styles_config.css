@@ -1,0 +1,16 @@
+.config-input-field  {
+    width: 100%;
+    border-radius: 12px;
+    background-color: lightgoldenrodyellow;
+}
+
+.main-config-title  {
+    font-family: 'Black Ops One', Arial, Helvetica, sans-serif;
+    font-size: 32px;
+    font-weight: bold;
+    color: black;
+    margin-bottom: 0;
+    text-align: center;
+    padding: 0.5rem;
+    border: 20px solid #4a4a4a;
+}

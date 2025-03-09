@@ -619,26 +619,24 @@ void setup(void) {
    * mount and/or reformat the littleFS
    */
   FSInfo fs_info;
-  LittleFS.info(fs_info);
+
 
   if(strcmp(pmon_config->reformat, "true") == 0)  {
     DEBUG_INFO("Formatting the filesystem...\n");
     if (!LittleFS.format())
       DEBUG_ERROR("ERROR: Could not format the filesystem...\n");
-    else  {
+    else
       DEBUG_INFO("Format successful\n");
-      DEBUG_INFO("fsTotalBytes: %u\n", fs_info.totalBytes);
-      DEBUG_INFO("fsUsedBytes: %u\n", fs_info.usedBytes);
-    }
   }
   delay(500);
   DEBUG_INFO("Mounting the filesystem...\n");
   if (!LittleFS.begin())
     DEBUG_ERROR("ERROR: Could not mount the filesystem...\n");
   else  {
+    LittleFS.info(fs_info);
     DEBUG_INFO("Mount successful\n");
-    DEBUG_INFO("fsTotalBytes: %u\n", fs_info.totalBytes);
-    DEBUG_INFO("fsUsedBytes: %u\n", fs_info.usedBytes);
+    DEBUG_INFO("fsTotalBytes: %d\n", fs_info.totalBytes);
+    DEBUG_INFO("fsUsedBytes: %d\n", fs_info.usedBytes);
   }
   delay(500);
 

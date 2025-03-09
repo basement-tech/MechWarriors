@@ -492,6 +492,9 @@ void createHTMLfromEEPROM(char *buf, int size)  {
    * start at 1 to skip the validation element
    * initial total string length was 898
    * note that strncpy() attempts to pad the full (n) bytes with '\0' and can overflow
+   *
+   * WARNING: you are very close to the RAM limit and printf()'s and the like
+   * seem to malloc() a large buffer for large strings and cause an exception/reboot.
    */
   int bufsize = size - 1;  // I think I have to save one for the final '\0'
 
@@ -510,10 +513,9 @@ void createHTMLfromEEPROM(char *buf, int size)  {
   strncpy((char*)(buf+strlen(buf)), "\t</form>\n",  (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
   buf[bufsize] = '\0';  // just in case ... note already reduced by one above
 
-  Serial.print("html buf(len=");
+  Serial.print("html buflen=");
   Serial.print(strlen(buf));
-  Serial.print(") =\n");
-  Serial.println(buf);
+  Serial.print(")\n");
 
 }
 

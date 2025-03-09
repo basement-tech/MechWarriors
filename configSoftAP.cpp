@@ -13,7 +13,8 @@
 
 ESP8266WebServer ap_server(80);  // Web server on port 80
 DNSServer dnsServer;           // DNS server for redirection
-#define GET_CONFIG_BUF_SIZE 5120
+#define GET_CONFIG_BUF_SIZE (int32_t)5120
+//#define GET_CONFIG_BUF_SIZE (int32_t)6044
 static char *getConfigContent; // malloc later if config'ing
 static bool config_done = false;  // done config ... reboot
 
@@ -143,7 +144,6 @@ void configSoftAP(void) {
       }
       *pbuf = '\0';  // terminate the char string
       fd.close();
-      DEBUG_VERBOSE("Raw file contents:\n%s\n", getConfigContent);
     }
   }
 
@@ -154,15 +154,17 @@ void configSoftAP(void) {
    * NOTE: tried to do this in the root callback and it kept core dumping ...
    *  may have been the upper limit of the debug message utility, but I like
    *  this better anyway.
+   * WARNING: you are very close to the RAM limit and printf()'s and the like
+   * seem to malloc() a large buffer for large strings and cause an exception/reboot.
    */
   createHTMLfromEEPROM((char *)(getConfigContent+strlen(getConfigContent)), GET_CONFIG_BUF_SIZE-strlen(getConfigContent));
   strncpy((char*)(getConfigContent+strlen(getConfigContent)), "</html>\n",  (GET_CONFIG_BUF_SIZE-strlen(getConfigContent) < 0 ? 0 : GET_CONFIG_BUF_SIZE-strlen(getConfigContent)));
+  Serial.printf("getConfigContent strlen = %d\n", strlen(getConfigContent));
   getConfigContent[GET_CONFIG_BUF_SIZE-1] = '\0';  // just in case ... at least it's a string even if incomplete
 
   Serial.println("Press any key to close server");
 
-  //while((Serial.available() == 0) && (config_done == false))  {
-    while(Serial.available() == 0)  {
+  while((Serial.available() == 0) && (config_done == false))  {
     dnsServer.processNextRequest();  // Handle DNS requests
     ap_server.handleClient();           // Handle web requests
   }
