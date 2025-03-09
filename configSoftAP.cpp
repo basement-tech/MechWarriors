@@ -14,7 +14,7 @@
 ESP8266WebServer ap_server(80);  // Web server on port 80
 DNSServer dnsServer;           // DNS server for redirection
 #define GET_CONFIG_BUF_SIZE 5120
-static char getConfigContent[GET_CONFIG_BUF_SIZE];  // to consolidate captive page contents
+static char *getConfigContent; // malloc later if config'ing
 static bool config_done = false;  // done config ... reboot
 
 
@@ -83,6 +83,12 @@ void configSoftAP(void) {
   const char *password_AP = AP_PASSWD;     // SoftAP Password ... must be long-ish for ssid to be advertised
 
   config_done = false;
+
+  if((getConfigContent = (char *)malloc(GET_CONFIG_BUF_SIZE)) == NULL)  {
+    Serial.println("Malloc failed ... rebooting");
+    delay(2000);
+    ESP.restart();
+  }
 
   IPAddress local_IP(AP_LOCAL_IP);       // Custom IP Address
   IPAddress gateway(AP_GATEWAY);        // Gateway
@@ -162,6 +168,8 @@ void configSoftAP(void) {
   ap_server.stop();
   dnsServer.stop();
   WiFi.softAPdisconnect(true);
+  if(getConfigContent != NULL)
+    free(getConfigContent);
 
   Serial.print("Free Heap After SoftAP Cleanup: ");
   Serial.println(ESP.getFreeHeap()); 
