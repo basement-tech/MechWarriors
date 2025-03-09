@@ -29,6 +29,8 @@
 #include <stdlib.h>  // for atoi()
 #include <string.h>  // for strncpy()
 #include <ctype.h>  // for isdigit()
+#include <ArduinoJson.h>
+#include <Arduino_DebugUtils.h>
 
 #include <EEPROM.h>
 
@@ -506,4 +508,19 @@ void createHTMLfromEEPROM(char *buf, int size)  {
   Serial.println(buf);
 
 
+}
+
+void saveJsonToEEPROM(JsonDocument jsonDoc)  {
+
+  for(int parm = 1; parm < EEPROM_ITEMS; parm++)  {
+    if(jsonDoc[eeprom_input[parm].label].isNull() == false)  {
+      strncpy(eeprom_input[parm].value, jsonDoc[eeprom_input[parm].label], (eeprom_input[parm].buflen-1));
+      Serial.print("Saving to eeprom_input[] ");
+      Serial.print(eeprom_input[parm].label);
+      Serial.print("=");
+      Serial.println(eeprom_input[parm].value);
+    }
+  }
+
+  //eeprom_put();
 }

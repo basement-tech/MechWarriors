@@ -12,9 +12,16 @@
 
             let config_data = {
                 action: String("save"),
-                ssid: String(document.getElementById('WIFI_SSID').value),
-                password: String(document.getElementById('WIFI_Password').value),
-                dhcp: String(document.getElementById('WIFI_DHCP').value)
+                WIFI_SSID: String(document.getElementById('WIFI_SSID').value),
+                WIFI_Password: String(document.getElementById('WIFI_Password').value),
+                WIFI_DHCP: String(document.getElementById('WIFI_DHCP').value),
+                Fixed_IP_Addr: String(document.getElementById('Fixed_IP_Addr').value),
+                WIFI_timeout: String(document.getElementById('WIFI_timeout').value),
+                GMT_offset: String(document.getElementById('GMT_offset').value),
+                debug_level: String(document.getElementById('debug_level').value),
+                npixel_cnt: String(document.getElementById('npixel_cnt').value),
+                neo_gamma: String(document.getElementById('neo_gamma').value),
+                def_neo_seq: String(document.getElementById('def_neo_seq').value)
             }
             let jsonData = JSON.stringify(config_data);
             console.log(jsonData);

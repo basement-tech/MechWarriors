@@ -13,7 +13,7 @@
 
 ESP8266WebServer ap_server(80);  // Web server on port 80
 DNSServer dnsServer;           // DNS server for redirection
-#define GET_CONFIG_BUF_SIZE 4096
+#define GET_CONFIG_BUF_SIZE 5120
 static char getConfigContent[GET_CONFIG_BUF_SIZE];  // to consolidate captive page contents
 static bool config_done = false;  // done config ... reboot
 
@@ -54,6 +54,7 @@ void handleSubmit(void)  {
       else  {
         jbuf = jsonDoc["action"];
         if(strcmp(jbuf, "save") == 0)  {
+          saveJsonToEEPROM(jsonDoc);
           ap_server.send(200, "text/html", "Successfully saved");
         }
         else if(strcmp(jbuf, "cancel") == 0)  {
