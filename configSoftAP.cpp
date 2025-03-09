@@ -32,30 +32,6 @@ void handleNotFound(void) {
   ap_server.send(302, "text/plain", "");
 }
 
-static const char alertErrorContent[] PROGMEM = R"==(
-  <html lang="en">
-    <body>
-      <script>alert('Error processing requested action');</script>
-    </body>
-  </html>
-)==";
-
-static const char alertRebootContent[] PROGMEM = R"==(
-  <html lang="en">
-    <body>
-      <script>alert('Saved ... rebooting ...');</script>
-    </body>
-  </html>
-)==";
-
-static const char alertCancelContent[] PROGMEM = R"==(
-  <html lang="en">
-    <body>
-      <script>alert('Action cancelled ... rebooting ...');</script>
-    </body>
-  </html>
-)==";
-
 void handleSubmit(void)  {
   JsonDocument jsonDoc;
   DeserializationError err;
@@ -78,16 +54,16 @@ void handleSubmit(void)  {
       else  {
         jbuf = jsonDoc["action"];
         if(strcmp(jbuf, "save") == 0)  {
-          ap_server.send(200, "text/html", alertRebootContent);
+          ap_server.send(200, "text/html", "Successfully saved");
         }
         else if(strcmp(jbuf, "cancel") == 0)  {
           config_done = true;
-          ap_server.send(200, "text/html", alertCancelContent);
+          ap_server.send(200, "text/html", "Configuration Cancelled");
         }
         else  {
           config_done = true;
           DEBUG_ERROR("WARNING: invalid value for \"action\" ... no change\n");
-          ap_server.send(404, "text/html", alertErrorContent);
+          ap_server.send(404, "text/html", "Invalid value for \"action\"");
         }
       }
     }

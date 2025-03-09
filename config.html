@@ -26,7 +26,10 @@
             })
             .then(response => {
                 if(response.status != 200) {
-                window.alert("Error processing configuration");
+                    window.alert("Error processing configuration");
+                }
+                else  {
+                    window.alert("Successfully saved");
                 }
                 return response.text();
             })
@@ -51,7 +54,10 @@
             })
             .then(response => {
                 if(response.status != 200) {
-                window.alert("Error processing configuration");
+                    window.alert("Error processing configuration");
+                }
+                else  {
+                    window.alert("Configuration Cancelled")
                 }
                 return response.text();
             })
