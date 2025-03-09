@@ -585,7 +585,7 @@ void setup(void) {
    *
    * NOTE: don't use the Arduino debug library for this part
    */
-  eeprom_begin();
+  eeprom_begin();  // instantiate the eeprom class
 
   Serial.println();
   Serial.println(EEPROM_INTRO_MSG);
@@ -610,16 +610,17 @@ void setup(void) {
 
   /*
    * prompt the user for input if the out bool was set above
-   * (if not, this function does nothing)
+   * (if not, this function just loads the current contents of the eeprom)
    */
   eeprom_user_input(out);
 
 
   /*
    * mount and/or reformat the littleFS
+   * wait to do this until after eeprom work so that
+   * we know whether to format the fs.
    */
   FSInfo fs_info;
-
 
   if(strcmp(pmon_config->reformat, "true") == 0)  {
     DEBUG_INFO("Formatting the filesystem...\n");
@@ -651,8 +652,6 @@ void setup(void) {
   if(digitalRead(PIN_CONFIG) == 0)
     configSoftAP();
 
-  
-  
   /*
    * once all of the eeprom setup is done,
    * set the debug level (see above for other comments)

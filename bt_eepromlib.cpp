@@ -94,9 +94,9 @@ void init_eeprom_input()  {
     eeprom_input[6].value = mon_config.tz_offset_gmt;
     eeprom_input[7].value = mon_config.debug_level;
     eeprom_input[8].value = mon_config.neocount;
-    eeprom_input[8].value = mon_config.neogamma;
+    eeprom_input[9].value = mon_config.neogamma;
     eeprom_input[10].value = mon_config.neodefault;
-    eeprom_input[10].value = mon_config.reformat;
+    eeprom_input[11].value = mon_config.reformat;
 }
 
 /*

@@ -83,10 +83,14 @@ void configSoftAP(void) {
   const char *ssid_AP = AP_SSID;  // SoftAP SSID
   const char *password_AP = AP_PASSWD;     // SoftAP Password ... must be long-ish for ssid to be advertised
 
-  config_done = false;
+  config_done = false;  // set by handler after config is done
 
+  /*
+   * malloc() the buffer here so that the memory isn't used if
+   * ap-based configuration is not requested
+   */
   if((getConfigContent = (char *)malloc(GET_CONFIG_BUF_SIZE)) == NULL)  {
-    Serial.println("Malloc failed ... rebooting");
+    DEBUG_ERROR("Malloc failed ... rebooting ...");
     delay(2000);
     ESP.restart();
   }
@@ -95,17 +99,14 @@ void configSoftAP(void) {
   IPAddress gateway(AP_GATEWAY);        // Gateway
   IPAddress subnet(AP_SUBNET);       // Subnet Mask
 
-  Serial.println("Starting local AP for configuration");
-  Serial.print("Connect to: ");
-  Serial.print(AP_SSID);
-  Serial.println(" to configure");
+  DEBUG_INFO("Starting local AP for configuration\n");
+  DEBUG_INFO("Connect to: %s to configure\n", AP_SSID);
 
   // Configure and start SoftAP
   WiFi.softAPConfig(local_IP, gateway, subnet);
   WiFi.softAP(ssid_AP, password_AP);
 
-  Serial.print("SoftAP IP Address: ");
-  Serial.println(WiFi.softAPIP());
+  DEBUG_INFO("SoftAP IP Address: %s\n", WiFi.softAPIP().toString().c_str());
 
   // Start DNS Server to redirect all requests to ESP8266
   dnsServer.start(53, "*", local_IP);
@@ -117,10 +118,9 @@ void configSoftAP(void) {
 
   // Start web server
   ap_server.begin();
-  Serial.println("Web server started!");
+  DEBUG_INFO("Web server started!\n");
 
-  Serial.print("Free Heap Before SoftAP Cleanup: ");
-  Serial.println(ESP.getFreeHeap());  
+  DEBUG_INFO("Free Heap Before SoftAP Cleanup: %d\n", ESP.getFreeHeap());  
 
   /*
    * copy the top of the html and javascript part of the config page
@@ -159,10 +159,10 @@ void configSoftAP(void) {
    */
   createHTMLfromEEPROM((char *)(getConfigContent+strlen(getConfigContent)), GET_CONFIG_BUF_SIZE-strlen(getConfigContent));
   strncpy((char*)(getConfigContent+strlen(getConfigContent)), "</html>\n",  (GET_CONFIG_BUF_SIZE-strlen(getConfigContent) < 0 ? 0 : GET_CONFIG_BUF_SIZE-strlen(getConfigContent)));
-  Serial.printf("getConfigContent strlen = %d\n", strlen(getConfigContent));
+  DEBUG_INFO("getConfigContent strlen = %d of %d used\n", strlen(getConfigContent), GET_CONFIG_BUF_SIZE);
   getConfigContent[GET_CONFIG_BUF_SIZE-1] = '\0';  // just in case ... at least it's a string even if incomplete
 
-  Serial.println("Press any key to close server");
+  DEBUG_INFO("Press any key to close server ...\n");
 
   while((Serial.available() == 0) && (config_done == false))  {
     dnsServer.processNextRequest();  // Handle DNS requests
@@ -176,7 +176,7 @@ void configSoftAP(void) {
   if(getConfigContent != NULL)
     free(getConfigContent);
 
-  Serial.print("Free Heap After SoftAP Cleanup: ");
+  DEBUG_INFO("Free Heap After SoftAP Cleanup: ");
   Serial.println(ESP.getFreeHeap()); 
 
   ESP.restart();
