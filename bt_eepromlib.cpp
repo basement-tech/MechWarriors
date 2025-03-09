@@ -59,7 +59,7 @@ struct eeprom_in  {
 /*
  * NOTE: validation must be at index = 0
  */
-#define EEPROM_ITEMS 11
+#define EEPROM_ITEMS 12
 struct eeprom_in eeprom_input[EEPROM_ITEMS] {
   {"",                                           "Validation",    "",                                       mon_config.valid,            sizeof(mon_config.valid)},
   {"DHCP Enable (true, false)",                  "WIFI_DHCP",     "false",                                  mon_config.dhcp_enable,      sizeof(mon_config.dhcp_enable)},
@@ -72,6 +72,7 @@ struct eeprom_in eeprom_input[EEPROM_ITEMS] {
   {"Enter # of neopixels",                       "npixel_cnt",    "24",                                     mon_config.neocount,         sizeof(mon_config.neocount)},
   {"Neopixel gamma (true, false)",               "neo_gamma",     "true",                                   mon_config.neogamma,         sizeof(mon_config.neogamma)},
   {"Enter default seq label (or \"none\")",      "def_neo_seq",   "none",                                   mon_config.neodefault,       sizeof(mon_config.neodefault)},
+  {"Reformat FS (true, false)",                  "FS_reformat",   "false",                                  mon_config.reformat,         sizeof(mon_config.reformat)},
 };
 
 /*
@@ -95,6 +96,7 @@ void init_eeprom_input()  {
     eeprom_input[8].value = mon_config.neocount;
     eeprom_input[8].value = mon_config.neogamma;
     eeprom_input[10].value = mon_config.neodefault;
+    eeprom_input[10].value = mon_config.reformat;
 }
 
 /*

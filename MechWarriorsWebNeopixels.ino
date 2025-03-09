@@ -587,23 +587,6 @@ void setup(void) {
    */
   eeprom_begin();
 
-  DEBUG_INFO("Mounting the filesystem...\n");
-  if (!LittleFS.begin())
-    DEBUG_ERROR("ERROR: Could not mount the filesystem...\n");
-
-
-  /*
-   * if the config physical button was pressed on power-up,
-   * instantiate and start the local soft AP to facilitate configuration
-   * from the captive page.  The esp is reset when this function exits.
-   */
-  pinMode(PIN_CONFIG, INPUT_PULLUP);
-  delay(1000);  // seems to be required to set it get to true before reading
-  Serial.println("Press config physical button to start configuration SoftAP");
-  if(digitalRead(PIN_CONFIG) == 0)
-    configSoftAP();
-
-  
   Serial.println();
   Serial.println(EEPROM_INTRO_MSG);
   Serial.println();
@@ -631,6 +614,47 @@ void setup(void) {
    */
   eeprom_user_input(out);
 
+
+  /*
+   * mount and/or reformat the littleFS
+   */
+  FSInfo fs_info;
+  LittleFS.info(fs_info);
+
+  if(strcmp(pmon_config->reformat, "true") == 0)  {
+    DEBUG_INFO("Formatting the filesystem...\n");
+    if (!LittleFS.format())
+      DEBUG_ERROR("ERROR: Could not format the filesystem...\n");
+    else  {
+      DEBUG_INFO("Format successful\n");
+      DEBUG_INFO("fsTotalBytes: %u\n", fs_info.totalBytes);
+      DEBUG_INFO("fsUsedBytes: %u\n", fs_info.usedBytes);
+    }
+  }
+  delay(500);
+  DEBUG_INFO("Mounting the filesystem...\n");
+  if (!LittleFS.begin())
+    DEBUG_ERROR("ERROR: Could not mount the filesystem...\n");
+  else  {
+    DEBUG_INFO("Mount successful\n");
+    DEBUG_INFO("fsTotalBytes: %u\n", fs_info.totalBytes);
+    DEBUG_INFO("fsUsedBytes: %u\n", fs_info.usedBytes);
+  }
+  delay(500);
+
+  /*
+   * if the config physical button was pressed on power-up,
+   * instantiate and start the local soft AP to facilitate configuration
+   * from the captive page.  The esp is reset when this function exits.
+   */
+  pinMode(PIN_CONFIG, INPUT_PULLUP);
+  delay(1000);  // seems to be required to set it get to true before reading
+  Serial.println("Press config physical button to start configuration SoftAP");
+  if(digitalRead(PIN_CONFIG) == 0)
+    configSoftAP();
+
+  
+  
   /*
    * once all of the eeprom setup is done,
    * set the debug level (see above for other comments)

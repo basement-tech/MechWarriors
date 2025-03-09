@@ -132,8 +132,10 @@ void configSoftAP(void) {
   }
   else  {
     DEBUG_INFO("Loading filename %s ...\n", AP_JS_NAME);
-    if((fd = LittleFS.open((const char *)(AP_JS_NAME), "r")) == false)  
+    if((fd = LittleFS.open((const char *)(AP_JS_NAME), "r")) == false)  {
+      DEBUG_ERROR("Unable to open file %s\n", AP_JS_NAME);
       ret = -1;
+    }
     else  {
       pbuf = getConfigContent;
       while(fd.available())  {
@@ -159,7 +161,8 @@ void configSoftAP(void) {
 
   Serial.println("Press any key to close server");
 
-  while((Serial.available() == 0) && (config_done == false))  {
+  //while((Serial.available() == 0) && (config_done == false))  {
+    while(Serial.available() == 0)  {
     dnsServer.processNextRequest();  // Handle DNS requests
     ap_server.handleClient();           // Handle web requests
   }
