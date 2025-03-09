@@ -515,7 +515,7 @@ void createHTMLfromEEPROM(char *buf, int size)  {
 
   Serial.print("html buflen=");
   Serial.print(strlen(buf));
-  Serial.print(")\n");
+  Serial.print("\n");
 
 }
 
