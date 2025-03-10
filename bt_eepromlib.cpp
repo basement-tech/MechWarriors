@@ -500,6 +500,11 @@ void createHTMLfromEEPROM(char *buf, int size)  {
 
   strncpy((char*)(buf+strlen(buf)), "\t<form onsubmit=\"deviceConfig(event)\">\n", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
   for(int parm = 1; parm < EEPROM_ITEMS; parm++)  {
+        strncpy((char*)(buf+strlen(buf)), "\t<label for=\"", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), "\">", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), " </label>\n", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
         strncpy((char*)(buf+strlen(buf)), "\t<input type=\"text\" class=\"config-input-field\" id=\"", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
         strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
         strncpy((char*)(buf+strlen(buf)), "\" name=\"", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));

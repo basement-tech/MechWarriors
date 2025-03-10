@@ -13,8 +13,8 @@
 
 ESP8266WebServer ap_server(80);  // Web server on port 80
 DNSServer dnsServer;           // DNS server for redirection
-#define GET_CONFIG_BUF_SIZE (int32_t)5120
-//#define GET_CONFIG_BUF_SIZE (int32_t)6044
+//#define GET_CONFIG_BUF_SIZE (int32_t)5120
+#define GET_CONFIG_BUF_SIZE (int32_t)6044
 static char *getConfigContent; // malloc later if config'ing
 static bool config_done = false;  // done config ... reboot
 
