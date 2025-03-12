@@ -513,8 +513,9 @@ void createHTMLfromEEPROM(char *buf, int size)  {
         strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].value,                                            (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
         strncpy((char*)(buf+strlen(buf)), "\"/><br><br>\n",                                                     (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
   }
-  strncpy((char*)(buf+strlen(buf)), "\t<button type=\"submit\">Save</button>\n",                               (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-  strncpy((char*)(buf+strlen(buf)), "\t<button type=\"button\" onclick=\"handleCancel()\">Reboot</button>\n",  (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+  strncpy((char*)(buf+strlen(buf)), "\t<button type=\"submit\" class=\"config-button\">Save</button>\n",                               (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+  strncpy((char*)(buf+strlen(buf)), "\t<button type=\"button\" class=\"config-button\" onclick=\"handleCancel()\">Reboot</button>\n", 
+                                                                                                               (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
   strncpy((char*)(buf+strlen(buf)), "\t</form>\n",                                                             (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
   buf[bufsize] = '\0';  // just in case ... note already reduced by one above
 
