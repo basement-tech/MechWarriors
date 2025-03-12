@@ -592,7 +592,7 @@ void setup(void) {
   Serial.println();
   Serial.println("Press any key to change settings");
 
-  int8_t tries = 5;
+  int8_t tries = 6;
   bool out = false;
   char inChar = '\0';
   while((out == false) && (tries > 0))  {
@@ -603,7 +603,7 @@ void setup(void) {
       inChar = Serial.read();
       out = true;
     }
-    delay(1000);
+    delay(500);
     tries--;
   }
   Serial.println();
