@@ -498,24 +498,24 @@ void createHTMLfromEEPROM(char *buf, int size)  {
    */
   int bufsize = size - 1;  // I think I have to save one for the final '\0'
 
-  strncpy((char*)(buf+strlen(buf)), "\t<form onsubmit=\"deviceConfig(event)\">\n", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+  strncpy((char*)(buf+strlen(buf)), "\t<form onsubmit=\"deviceConfig(event)\">\n",                             (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
   for(int parm = 1; parm < EEPROM_ITEMS; parm++)  {
-        strncpy((char*)(buf+strlen(buf)), "\t<label for=\"", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-        strncpy((char*)(buf+strlen(buf)), "\">", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-        strncpy((char*)(buf+strlen(buf)), " </label>\n", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-        strncpy((char*)(buf+strlen(buf)), "\t<input type=\"text\" class=\"config-input-field\" id=\"", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-        strncpy((char*)(buf+strlen(buf)), "\" name=\"", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label, (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-        strncpy((char*)(buf+strlen(buf)), "\" value=\"", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].value, (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-        strncpy((char*)(buf+strlen(buf)), "\"><br><br>\n", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), "\t<label for=\"",                                                   (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label,                                            (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), "\">",                                                               (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label,                                            (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), " </label>\n",                                                       (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), "\t<input type=\"text\" class=\"config-input-field\" id=\"",         (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label,                                            (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), "\" name=\"",                                                        (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].label,                                            (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), "\" value=\"",                                                       (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), eeprom_input[parm].value,                                            (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+        strncpy((char*)(buf+strlen(buf)), "\"/><br><br>\n",                                                     (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
   }
-  strncpy((char*)(buf+strlen(buf)), "\t<button type=\"submit\">Save</button>\n", (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+  strncpy((char*)(buf+strlen(buf)), "\t<button type=\"submit\">Save</button>\n",                               (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
   strncpy((char*)(buf+strlen(buf)), "\t<button type=\"button\" onclick=\"handleCancel()\">Reboot</button>\n",  (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
-  strncpy((char*)(buf+strlen(buf)), "\t</form>\n",  (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
+  strncpy((char*)(buf+strlen(buf)), "\t</form>\n",                                                             (bufsize-strlen(buf) < 0 ? 0 : bufsize-strlen(buf)));
   buf[bufsize] = '\0';  // just in case ... note already reduced by one above
 
   Serial.print("html buflen=");

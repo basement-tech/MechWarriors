@@ -23,6 +23,10 @@ static bool config_done = false;  // done config ... reboot
  * this function is only executed when the device is being configured.
  * so, not worrying about PROGMEM for html/js and hoping the buffer get
  * reused.
+ *
+ * NOTE: with these handlers, this limited, config only server 
+ * cannot load any other files, like a .css for example.  For that
+ * reason, styles are in the main .html file.
  */
 void handleRoot(void) {
   ap_server.send(200, "text/html", getConfigContent);
@@ -158,12 +162,16 @@ void configSoftAP(void) {
    * seem to malloc() a large buffer for large strings and cause an exception/reboot.
    */
   createHTMLfromEEPROM((char *)(getConfigContent+strlen(getConfigContent)), GET_CONFIG_BUF_SIZE-strlen(getConfigContent));
-  strncpy((char*)(getConfigContent+strlen(getConfigContent)), "</html>\n",  (GET_CONFIG_BUF_SIZE-strlen(getConfigContent) < 0 ? 0 : GET_CONFIG_BUF_SIZE-strlen(getConfigContent)));
+  strncpy((char*)(getConfigContent+strlen(getConfigContent)), "\t</body>\n</html>\n",  (GET_CONFIG_BUF_SIZE-strlen(getConfigContent) < 0 ? 0 : GET_CONFIG_BUF_SIZE-strlen(getConfigContent)));
   DEBUG_INFO("getConfigContent strlen = %d of %d used\n", strlen(getConfigContent), GET_CONFIG_BUF_SIZE);
   getConfigContent[GET_CONFIG_BUF_SIZE-1] = '\0';  // just in case ... at least it's a string even if incomplete
 
   DEBUG_INFO("Press any key to close server ...\n");
 
+  /*
+   * wait here until either a character is entered on the serial line
+   * or the user presses the <reboot> on the browser-based config screen.
+   */
   while((Serial.available() == 0) && (config_done == false))  {
     dnsServer.processNextRequest();  // Handle DNS requests
     ap_server.handleClient();           // Handle web requests
@@ -179,6 +187,11 @@ void configSoftAP(void) {
   DEBUG_INFO("Free Heap After SoftAP Cleanup: ");
   Serial.println(ESP.getFreeHeap()); 
 
+  /*
+   * easiest to restart to reclaim memory.  the .stop()'s above are
+   * supposed to do that, but doesn't seem to be complete.
+   * remember the buffer for html/js is malloc()'ed if config is requested.
+   */
   ESP.restart();
 }
 

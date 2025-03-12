@@ -1,9 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
+    <style>
+        .config-input-field  {
+            width: 100%;
+            border-radius: 12px;
+            background-color: lightgoldenrodyellow;
+        }
+        
+        .main-config-title  {
+            font-family: 'Black Ops One', Arial, Helvetica, sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            color: black;
+            margin-bottom: 0;
+            text-align: center;
+            padding: 0.5rem;
+            border: 20px solid #4a4a4a;
+        }
+    </style>
     <head>
         <title>Neo Configuration</title>
-        <link rel="stylesheet" href="styles_config.css">
     </head>
+    <body>
     <h1 class="main-config-title">
         Enter new configuration values and press Save to save, Reboot to leave unchanged
     </h1>
@@ -48,7 +66,7 @@
         }
 
         function handleCancel()  {
-            console.log("action cancelled");
+            console.log("rebooting ...");
             event.preventDefault();
 
             let config_data = {
