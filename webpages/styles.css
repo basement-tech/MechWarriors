@@ -30,6 +30,10 @@ label {
   background-color: rgb(236, 103, 196);
 }
 
+#tower {
+  background-color: rgb(238, 81, 8);
+}
+
 #stop {
   background-color: rgb(248, 244, 7);
 }

@@ -168,6 +168,13 @@ neo_data_t neo_sequences[MAX_SEQUENCES] = {
       { 0, 0, 0, 0, -1 },
     }
   }, // rainbow
+  { "TOWER",
+    "tower",
+    {0},
+    {
+      { 0, 0, 0, 0, -1 },
+    }
+  }, // color tower
   { "SODIUM",
     "slowp",
     "{ \"count\" : \"+6\", \"flicker\" : {\"r\": 245,  \"g\": 235,    \"b\": 76,  \"w\": 0, \"t\": 5}}",
@@ -205,11 +212,4 @@ neo_data_t neo_sequences[MAX_SEQUENCES] = {
       { 0, 0, 0, 0, -1 },
     }
   }, // user-4
-  { "USER-5",
-    {0},
-    {0},
-    {
-      { 0, 0, 0, 0, -1 },
-    }
-  }, // user-5
 };

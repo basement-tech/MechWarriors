@@ -7,8 +7,8 @@
 #include <c_types.h>
 #include <Adafruit_NeoPixel.h>
 
-#define NEO_SEQ_STRATEGIES 6
-#define MAX_USER_SEQ       5      // maximum number of user buttons/files
+#define NEO_SEQ_STRATEGIES 7
+#define MAX_USER_SEQ       4      // maximum number of user buttons/files
 #define MAX_SEQUENCES      10     // number of sequences to allocate
 #define MAX_NUM_SEQ_POINTS 256    // maximum number of points per sequence
 #define MAX_NEO_BONUS      128     // max chars  in strategy bonus
@@ -68,6 +68,7 @@ typedef enum {
   SEQ_STRAT_PONG,     // attributes of single moving pixel are specified
   SEQ_STRAT_RAINBOW,  // attributes of a dynamic rainbow pattern are specified
   SEQ_STRAT_SLOWP,    // slow pulse - calculated sequence
+  SEQ_STRAT_TOWER,    // build a tower of color
   SEQ_STRAT_UNDEFINED
 }  seq_strategy_t;
 

@@ -984,6 +984,102 @@ void neo_rainbow_stopping(void)  {
 // end of SEQ_STRAT_RAINBOW callbacks
 
 /*
+ * neo_tower callbacks
+ */
+uint8_t tower_colors_f[3] = { 128, 0, 0 };
+uint8_t tower_colors_b[3] = { 32, 0, 32  };
+int tower_top_pixel = 0;  // top lit pixel
+bool tower_dir_up = true;  // going up or down
+bool tower_beat_pause_expire = false;
+#define TOWER_BEAT_PAUSE   300  // mS between beats
+#define TOWER_STEP_PAUSE   15   // mS between steps up/down
+
+void neo_tower_start(bool clear)  {
+  pixels->clear();
+  pixels->show();
+
+  current_millis = millis();
+
+  tower_top_pixel = 0;
+  tower_beat_pause_expire = false;
+
+  neo_state = NEO_SEQ_WRITE;
+
+}
+
+/*
+ * wait a fixed 10mS
+ */
+void neo_tower_wait(void)  {
+  uint64_t new_millis = 0;
+
+  /*
+   * first wait for the between beat pause to expire
+   */
+  if(tower_beat_pause_expire == false)  {
+    if(((new_millis = millis()) - current_millis) >= TOWER_BEAT_PAUSE)  {
+      tower_beat_pause_expire = true;
+      current_millis = new_millis;
+    }
+  }
+  else  {
+    /*
+      * if the timer has expired (or assumed that if current_millis == 0, then it will be)
+      * i.e. done waiting move to the next state
+      */
+    if(((new_millis = millis()) - current_millis) >= TOWER_STEP_PAUSE)  {
+      current_millis = new_millis;
+      neo_state = NEO_SEQ_WRITE;
+    }
+  }
+}
+
+/*
+ * advance and write a pixel
+ */
+void neo_tower_write(void) {
+
+  uint16_t p_num_pixels = pixels->numPixels();
+
+  for(int i=0; i < p_num_pixels; i++)  { // For each pixel...
+    if(i <= tower_top_pixel)
+      pixels->setPixelColor(i, neo_convert_color(tower_colors_f[0], tower_colors_f[1], tower_colors_f[2]));
+    else
+      pixels->setPixelColor(i, neo_convert_color(tower_colors_b[0], tower_colors_b[1], tower_colors_b[2]));
+
+  }
+  pixels->show();
+
+  if(tower_dir_up == true)  {
+    tower_top_pixel++;
+    if(tower_top_pixel >= p_num_pixels)  {
+      tower_top_pixel--;
+      tower_dir_up = false;
+    }
+  }
+  else  {
+    tower_top_pixel--;
+    if(tower_top_pixel <= 0)  {
+      tower_dir_up = true;
+      tower_beat_pause_expire = false;
+    }
+  }
+
+  neo_state = NEO_SEQ_WAIT;
+
+}
+
+void neo_tower_stopping(void)  {
+  pixels->clear(); // Set all pixel colors to 'off'
+  pixels->show();   // Send the updated pixel colors to the hardware.
+
+  seq_index = -1; // so it doesn't match
+
+  neo_state = NEO_SEQ_STOPPED;
+}
+
+
+/*
  * function calls by strategy for each state in the playback machine
  * TODO: delete the 'x' before the labels after implementing a strategy
  */
@@ -995,6 +1091,7 @@ seq_callbacks_t seq_callbacks[NEO_SEQ_STRATEGIES] = {
   { SEQ_STRAT_PONG,      "pong",           neo_pong_start,    neo_slowp_wait,    neo_pong_write,      neo_points_stopping,      noop},
   { SEQ_STRAT_RAINBOW,   "rainbow",       neo_rainbow_start, neo_rainbow_wait,  neo_rainbow_write,    neo_rainbow_stopping,     noop},
   { SEQ_STRAT_SLOWP,     "slowp",          neo_slowp_start,   neo_slowp_wait,    neo_slowp_write,     neo_points_stopping,      noop},
+  { SEQ_STRAT_TOWER ,     "tower",        neo_tower_start,    neo_tower_wait,    neo_tower_write,      neo_tower_stopping,     noop},
 };
 
 /*
